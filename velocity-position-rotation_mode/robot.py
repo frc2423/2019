@@ -111,15 +111,16 @@ class MyRobot(wpilib.TimedRobot):
         self.fl_motor = ctre.wpi_talonsrx.WPI_TalonSRX(3)
 
         self.fr_motor.setInverted(True)
-        self.br_motor.setInverted(False)
+        self.br_motor.setInverted(True)
 
         self.fl_motor.configSelectedFeedbackSensor(ctre.FeedbackDevice.QuadEncoder, 0, MyRobot.TIMEOUT_MS)
         self.bl_motor.configSelectedFeedbackSensor(ctre.FeedbackDevice.QuadEncoder, 0, MyRobot.TIMEOUT_MS)
         self.fr_motor.configSelectedFeedbackSensor(ctre.FeedbackDevice.QuadEncoder, 0, MyRobot.TIMEOUT_MS)
         self.br_motor.configSelectedFeedbackSensor(ctre.FeedbackDevice.QuadEncoder, 0, MyRobot.TIMEOUT_MS)
 
-        self.fr_motor.setSensorPhase(True)  # Reverse negative encoder values
+        # Reverse negative encoder values
         self.fl_motor.setSensorPhase(True)
+        self.br_motor.setSensorPhase(True)
 
         self.deadzone_amount = 0.15
 
@@ -129,7 +130,7 @@ class MyRobot(wpilib.TimedRobot):
         self.js_startAngle = 0
         self.rot_startNavx = 0
 
-        self.spinman = ctre.wpi_talonsrx.WPI_TalonSRX(5)
+        # self.spinman = ctre.wpi_talonsrx.WPI_TalonSRX(5)
 
         self.littlearms1 = wpilib.Servo(7)
         self.littlearms2 = wpilib.Servo(8)
@@ -242,6 +243,7 @@ class MyRobot(wpilib.TimedRobot):
 
 
     def velocity_mode(self):
+
         js_horizontal_2 = self.joystick.getRawAxis(4)
         x_speed = self.deadzone(self.joystick.getRawAxis(self.LX_AXIS), self.deadzone_amount)
         y_speed = self.deadzone(self.joystick.getRawAxis(self.LY_AXIS), self.deadzone_amount)
@@ -250,7 +252,7 @@ class MyRobot(wpilib.TimedRobot):
         self.fl_motor.set(ctre.WPI_TalonSRX.ControlMode.PercentOutput, fl)
         self.bl_motor.set(ctre.WPI_TalonSRX.ControlMode.PercentOutput, bl)
         self.fr_motor.set(ctre.WPI_TalonSRX.ControlMode.PercentOutput, fr)
-        self.br_motor.set(ctre.WPI_TalonSRX.ControlMode.PercentOutput, -br)
+        self.br_motor.set(ctre.WPI_TalonSRX.ControlMode.PercentOutput, br)
 
         if self.joystick.getRawButton(self.BUTTON_LBUMPER):
             return 'enter_rotation'
