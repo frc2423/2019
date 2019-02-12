@@ -38,7 +38,7 @@ class MyRobot(wpilib.TimedRobot):
     d = ntproperty('/encoders/d', 0.0)
     f = ntproperty('/encoders/f', .7)
 
-    displacement_multiplier = ntproperty("/encoders/displacement_multiplier", 500)
+    displacement_multiplier = ntproperty("/encoders/displacement_multiplier", 1)
 
 
     servo_position = ntproperty('/Servo/Value', .5)
@@ -279,10 +279,10 @@ class MyRobot(wpilib.TimedRobot):
                                         self.joystick.getRawAxis(self.RX_AXIS),
                                         self.relativeGyro.getAngle())
 
-        self.fl_motor.set(ctre.WPI_TalonSRX.ControlMode.Position, fl * self.displacement_multiplier)
-        self.fr_motor.set(ctre.WPI_TalonSRX.ControlMode.Position, fr * self.displacement_multiplier)
-        self.bl_motor.set(ctre.WPI_TalonSRX.ControlMode.Position, bl * self.displacement_multiplier)
-        self.br_motor.set(ctre.WPI_TalonSRX.ControlMode.Position, br * self.displacement_multiplier)
+        self.fl_motor.set(ctre.WPI_TalonSRX.ControlMode.Position, fl * self.displacement_multiplier * self.ticks_per_rev_fl)
+        self.fr_motor.set(ctre.WPI_TalonSRX.ControlMode.Position, fr * self.displacement_multiplier * self.ticks_per_rev_fr)
+        self.bl_motor.set(ctre.WPI_TalonSRX.ControlMode.Position, bl * self.displacement_multiplier * self.ticks_per_rev_bl)
+        self.br_motor.set(ctre.WPI_TalonSRX.ControlMode.Position, br * self.displacement_multiplier * self.ticks_per_rev_br)
 
         if self.joystick.getRawButton(self.BUTTON_RBUMPER):
             return 'position'
