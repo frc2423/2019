@@ -50,7 +50,7 @@ class MyRobot(wpilib.TimedRobot):
 
     ticks_per_rev = ntproperty('/encoders/ticks_per_rev', 1440)
     wheel_diameter = ntproperty('/encoders/wheel_diameter', 6)
-    max_speed = ntproperty('/encoders/max_speed', 12)
+    max_speed = ntproperty('/encoders/max_speed', 1)
     wheel_diameter = ntproperty('/encoders/wheel_diameter', 6)
 
     ticks_per_rev_fl = ntproperty('/encoders/ticks_per_rev_fl', 8630) # done
@@ -109,6 +109,11 @@ class MyRobot(wpilib.TimedRobot):
         self.bl_motor = ctre.wpi_talonsrx.WPI_TalonSRX(4)
         self.fr_motor = ctre.wpi_talonsrx.WPI_TalonSRX(7)
         self.fl_motor = ctre.wpi_talonsrx.WPI_TalonSRX(3)
+        
+        self.fl_motor.configClosedLoopRamp(2,0)
+        self.bl_motor.configClosedLoopRamp(2,0)
+        self.fr_motor.configClosedLoopRamp(2,0)
+        self.br_motor.configClosedLoopRamp(2,0)
 
         self.fr_motor.setInverted(True)
         self.br_motor.setInverted(True)
@@ -215,6 +220,7 @@ class MyRobot(wpilib.TimedRobot):
         self.fl_motor.setQuadraturePosition(0, 0)
         self.br_motor.setQuadraturePosition(0, 0)
         self.bl_motor.setQuadraturePosition(0, 0)
+        self.bl_motor.configOpenLoopRamp
 
 
         self.driveStates = {
@@ -249,10 +255,18 @@ class MyRobot(wpilib.TimedRobot):
         y_speed = self.deadzone(self.joystick.getRawAxis(self.LY_AXIS), self.deadzone_amount)
         z_speed = self.deadzone(js_horizontal_2)
         fl, bl, fr, br = driveCartesian(x_speed, -y_speed, z_speed)
-        self.fl_motor.set(ctre.WPI_TalonSRX.ControlMode.PercentOutput, fl)
-        self.bl_motor.set(ctre.WPI_TalonSRX.ControlMode.PercentOutput, bl)
-        self.fr_motor.set(ctre.WPI_TalonSRX.ControlMode.PercentOutput, fr)
-        self.br_motor.set(ctre.WPI_TalonSRX.ControlMode.PercentOutput, br)
+
+        fl = self.to_motor_speed(fl * self.max_speed, self.ticks_per_rev_fl) 
+        bl = self.to_motor_speed(bl * self.max_speed, self.ticks_per_rev_bl)
+        fr = self.to_motor_speed(fr * self.max_speed, self.ticks_per_rev_fr)
+        br = self.to_motor_speed(br * self.max_speed, self.ticks_per_rev_br)
+
+        self.fl_motor.set(ctre.WPI_TalonSRX.ControlMode.Velocity, fl)
+        self.bl_motor.set(ctre.WPI_TalonSRX.ControlMode.Velocity, bl)
+        self.fr_motor.set(ctre.WPI_TalonSRX.ControlMode.Velocity, fr)
+        self.br_motor.set(ctre.WPI_TalonSRX.ControlMode.Velocity, br)
+
+        print(f"Error:   FL: {self.fl_motor.getClosedLoopError(0)}    BL: {self.bl_motor.getClosedLoopError(0)}   FR: {self.fr_motor.getClosedLoopError(0)}   BR: {self.br_motor.getClosedLoopError(0)}")
 
         if self.joystick.getRawButton(self.BUTTON_LBUMPER):
             return 'enter_rotation'
@@ -338,7 +352,7 @@ class MyRobot(wpilib.TimedRobot):
 
     def teleopPeriodic(self):
         self.drive_sm.run()
-        print(f"FL: {self.fl_motor.getQuadraturePosition()}    FR: {self.fr_motor.getQuadraturePosition()}    BL: {self.bl_motor.getQuadraturePosition()}    BR: {self.br_motor.getQuadraturePosition()}")
+        #print(f"FL: {self.fl_motor.getQuadraturePosition()}    FR: {self.fr_motor.getQuadraturePosition()}    BL: {self.bl_motor.getQuadraturePosition()}    BR: {self.br_motor.getQuadraturePosition()}")
 
 
     def regular_mec_drive(self):
