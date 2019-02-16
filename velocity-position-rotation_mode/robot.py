@@ -33,30 +33,32 @@ class RelativeGyro:
 class MyRobot(wpilib.TimedRobot):
     TIMEOUT_MS = 30
 
-    p = ntproperty('/encoders/p', .5)
-    i = ntproperty('/encoders/i', .001)
-    d = ntproperty('/encoders/d', 0.0)
-    f = ntproperty('/encoders/f', .7)
+    p = ntproperty('/encoders/p', .5, persistent = True)
+    i = ntproperty('/encoders/i', 0.0, persistent = True)
+    d = ntproperty('/encoders/d', 0.0, persistent = True)
+    f = ntproperty('/encoders/f', .7, persistent=True)
 
-    displacement_multiplier = ntproperty("/encoders/displacement_multiplier", 1)
+    talon_ramp = ntproperty('/encoders/talon_ramp', 0, persistent = True)
+
+    displacement_multiplier = ntproperty("/encoders/displacement_multiplier", 1, persistent = True)
 
 
-    servo_position = ntproperty('/Servo/Value', .5)
-    servo_offset1 = ntproperty('/Servo/Offset1', 0)
-    servo_offset2 = ntproperty('/Servo/Offset2', 0)
-    arm_up = ntproperty('/Servo/ArmUp', 0)
-    arm_down = ntproperty('/Servo/ArmDown', 0)
-    #liftforball = ntproperty('/Servo/ArmforBall', 0.5)
+    servo_position = ntproperty('/Servo/Value', .5, persistent = True)
+    servo_offset1 = ntproperty('/Servo/Offset1', 0, persistent = True)
+    servo_offset2 = ntproperty('/Servo/Offset2', 0, persistent = True)
+    arm_up = ntproperty('/Servo/ArmUp', 0, persistent = True)
+    arm_down = ntproperty('/Servo/ArmDown', 0, persistent = True)
+    #liftforball = ntproperty('/Servo/ArmforBall', 0.5, persistent = True)
 
-    ticks_per_rev = ntproperty('/encoders/ticks_per_rev', 1440)
-    wheel_diameter = ntproperty('/encoders/wheel_diameter', 6)
-    max_speed = ntproperty('/encoders/max_speed', 1)
-    wheel_diameter = ntproperty('/encoders/wheel_diameter', 6)
+    ticks_per_rev = ntproperty('/encoders/ticks_per_rev', 1440, persistent = True)
+    wheel_diameter = ntproperty('/encoders/wheel_diameter', 6, persistent = True)
+    max_speed = ntproperty('/encoders/max_speed', 1, persistent = True)
+    wheel_diameter = ntproperty('/encoders/wheel_diameter', 6, persistent = True)
 
-    ticks_per_rev_fl = ntproperty('/encoders/ticks_per_rev_fl', 8630) # done
-    ticks_per_rev_bl = ntproperty('/encoders/ticks_per_rev_bl', 8630) # done
-    ticks_per_rev_fr = ntproperty('/encoders/ticks_per_rev_fr', 8630) # done
-    ticks_per_rev_br = ntproperty('/encoders/ticks_per_rev_br', 8630) # done
+    ticks_per_rev_fl = ntproperty('/encoders/ticks_per_rev_fl', 8630, persistent = True) # done
+    ticks_per_rev_bl = ntproperty('/encoders/ticks_per_rev_bl', 8630, persistent = True) # done
+    ticks_per_rev_fr = ntproperty('/encoders/ticks_per_rev_fr', 8630, persistent = True) # done
+    ticks_per_rev_br = ntproperty('/encoders/ticks_per_rev_br', 8630, persistent = True) # done
 
     def setEncoderPids(self):
         print("setting encoder PIDs")
@@ -81,17 +83,22 @@ class MyRobot(wpilib.TimedRobot):
         self.br_motor.config_kD(0, self.d, MyRobot.TIMEOUT_MS)
         self.br_motor.config_kF(0, self.f, MyRobot.TIMEOUT_MS)
 
+    def set_talon_ramp(self):
+        self.fl_motor.configClosedLoopRamp(self.talon_ramp, 0)
+        self.fr_motor.configClosedLoopRamp(self.talon_ramp, 0)
+        self.bl_motor.configClosedLoopRamp(self.talon_ramp, 0)
+        self.br_motor.configClosedLoopRamp(self.talon_ramp, 0)
 
-    turn_rate_p = ntproperty('/gyro/turn_rate_p', 0)
-    turn_rate_i = ntproperty('/gyro/turn_rate_i', 0)
-    turn_rate_d = ntproperty('/gyro/turn_rate_d', 0)
+    turn_rate_p = ntproperty('/gyro/turn_rate_p', 0, persistent = True)
+    turn_rate_i = ntproperty('/gyro/turn_rate_i', 0, persistent = True)
+    turn_rate_d = ntproperty('/gyro/turn_rate_d', 0, persistent = True)
 
-    turn_rate_pid_input_range = ntproperty('/gyro/pid_input_range', 180)
-    turn_rate_pid_output_range = ntproperty('/gyro/pid_output_range', 1)
+    turn_rate_pid_input_range = ntproperty('/gyro/pid_input_range', 180, persistent = True)
+    turn_rate_pid_output_range = ntproperty('/gyro/pid_output_range', 1, persistent = True)
 
-    pause_time = ntproperty('/gyro/pause_time', 1)
+    pause_time = ntproperty('/gyro/pause_time', 1, persistent = True)
 
-    max_turn_rate = ntproperty("/gyro/max_turn_rate", 120)
+    max_turn_rate = ntproperty("/gyro/max_turn_rate", 120, persistent = True)
 
     def robotInit(self):
 
@@ -187,6 +194,7 @@ class MyRobot(wpilib.TimedRobot):
             return angle
 
     def entry_listener(self, key, value, is_new):
+        self.set_talon_ramp()
         try:
             if key == '/gyro/turn_rate_p':
                 self.angle_pid.setP(self.turn_rate_p)
@@ -246,7 +254,11 @@ class MyRobot(wpilib.TimedRobot):
 
         self.prev_pid_toggle_btn_value = pid_toggle_btn_value
 
-
+    def get_drive_cartesian(self):
+        return driveCartesian(self.deadzone(self.joystick.getRawAxis(self.LX_AXIS)),
+                                        self.deadzone(self.joystick.getRawAxis(self.LY_AXIS)),
+                                        self.deadzone(self.joystick.getRawAxis(self.RX_AXIS)),
+                                        self.deadzone(self.relativeGyro.getAngle()))
 
     def velocity_mode(self):
 
@@ -266,7 +278,7 @@ class MyRobot(wpilib.TimedRobot):
         self.fr_motor.set(ctre.WPI_TalonSRX.ControlMode.Velocity, fr)
         self.br_motor.set(ctre.WPI_TalonSRX.ControlMode.Velocity, br)
 
-        print(f"Error:   FL: {self.fl_motor.getClosedLoopError(0)}    BL: {self.bl_motor.getClosedLoopError(0)}   FR: {self.fr_motor.getClosedLoopError(0)}   BR: {self.br_motor.getClosedLoopError(0)}")
+        #print(f"Error:   FL: {self.fl_motor.getClosedLoopError(0)}    BL: {self.bl_motor.getClosedLoopError(0)}   FR: {self.fr_motor.getClosedLoopError(0)}   BR: {self.br_motor.getClosedLoopError(0)}")
 
         if self.joystick.getRawButton(self.BUTTON_LBUMPER):
             return 'enter_rotation'
@@ -276,9 +288,7 @@ class MyRobot(wpilib.TimedRobot):
         return 'velocity'
 
     def enter_position_mode(self):
-        fl, bl, fr, br = driveCartesian(self.joystick.getRawAxis(self.LX_AXIS),
-                                        self.joystick.getRawAxis(self.LY_AXIS),
-                                        self.joystick.getRawAxis(self.RX_AXIS), self.relativeGyro.getAngle())
+        fl, bl, fr, br = self.get_drive_cartesian()
 
         self.fl_motor.setQuadraturePosition(int(fl), MyRobot.TIMEOUT_MS)
         self.fr_motor.setQuadraturePosition(int(fr), MyRobot.TIMEOUT_MS)
@@ -288,15 +298,14 @@ class MyRobot(wpilib.TimedRobot):
         return 'position'
 
     def position_mode(self):
-        fl, bl, fr, br = driveCartesian(self.joystick.getRawAxis(self.LX_AXIS),
-                                        -self.joystick.getRawAxis(self.LY_AXIS),
-                                        self.joystick.getRawAxis(self.RX_AXIS),
-                                        self.relativeGyro.getAngle())
+        fl, bl, fr, br = self.get_drive_cartesian()
 
         self.fl_motor.set(ctre.WPI_TalonSRX.ControlMode.Position, fl * self.displacement_multiplier * self.ticks_per_rev_fl)
         self.fr_motor.set(ctre.WPI_TalonSRX.ControlMode.Position, fr * self.displacement_multiplier * self.ticks_per_rev_fr)
         self.bl_motor.set(ctre.WPI_TalonSRX.ControlMode.Position, bl * self.displacement_multiplier * self.ticks_per_rev_bl)
         self.br_motor.set(ctre.WPI_TalonSRX.ControlMode.Position, br * self.displacement_multiplier * self.ticks_per_rev_br)
+
+        print(f"gyro: {self.relativeGyro.getAngle()}")
 
         if self.joystick.getRawButton(self.BUTTON_RBUMPER):
             return 'position'
@@ -352,7 +361,7 @@ class MyRobot(wpilib.TimedRobot):
 
     def teleopPeriodic(self):
         self.drive_sm.run()
-        #print(f"FL: {self.fl_motor.getQuadraturePosition()}    FR: {self.fr_motor.getQuadraturePosition()}    BL: {self.bl_motor.getQuadraturePosition()}    BR: {self.br_motor.getQuadraturePosition()}")
+        print(f"FL: {self.fl_motor.getQuadraturePosition()}    FR: {self.fr_motor.getQuadraturePosition()}    BL: {self.bl_motor.getQuadraturePosition()}    BR: {self.br_motor.getQuadraturePosition()}")
 
 
     def regular_mec_drive(self):
