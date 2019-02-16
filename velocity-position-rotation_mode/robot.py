@@ -117,10 +117,6 @@ class MyRobot(wpilib.TimedRobot):
         self.fr_motor = ctre.wpi_talonsrx.WPI_TalonSRX(7)
         self.fl_motor = ctre.wpi_talonsrx.WPI_TalonSRX(3)
         
-        self.fl_motor.configClosedLoopRamp(2,0)
-        self.bl_motor.configClosedLoopRamp(2,0)
-        self.fr_motor.configClosedLoopRamp(2,0)
-        self.br_motor.configClosedLoopRamp(2,0)
 
         self.fr_motor.setInverted(True)
         self.br_motor.setInverted(True)
@@ -363,6 +359,9 @@ class MyRobot(wpilib.TimedRobot):
         self.drive_sm.run()
         print(f"FL: {self.fl_motor.getQuadraturePosition()}    FR: {self.fr_motor.getQuadraturePosition()}    BL: {self.bl_motor.getQuadraturePosition()}    BR: {self.br_motor.getQuadraturePosition()}")
 
+        print ('Pitch', self.navx.getPitch())
+
+        #print(f"FL: {self.fl_motor.getQuadraturePosition()}    FR: {self.fr_motor.getQuadraturePosition()}    BL: {self.bl_motor.getQuadraturePosition()}    BR: {self.br_motor.getQuadraturePosition()}")
 
     def regular_mec_drive(self):
         x = self.joystick.getRawAxis(0)

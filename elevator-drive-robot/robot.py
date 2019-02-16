@@ -17,6 +17,7 @@ class MyRobot(wpilib.TimedRobot):
 
     back_lift_speed = ntproperty('/lifts/back_lift_speed', 1, persistent=True)
     front_lift_speed = ntproperty('/lifts/front_lift_speed', 1, persistent=True)
+    arm_speed = ntproperty('/lifts/arm_speed', 1, persistent=True)
 
 
     def robotInit(self):
@@ -36,6 +37,7 @@ class MyRobot(wpilib.TimedRobot):
         self.fl_motor = ctre.wpi_talonsrx.WPI_TalonSRX(3)
         self.fr_motor = ctre.wpi_talonsrx.WPI_TalonSRX(7)
 
+        self.arm = ctre.wpi_talonsrx.WPI_TalonSRX(0)
         self.back_lift = ctre.wpi_talonsrx.WPI_TalonSRX(2)
         self.back_lift_wheel = ctre.wpi_talonsrx.WPI_TalonSRX(1)
 
@@ -43,6 +45,13 @@ class MyRobot(wpilib.TimedRobot):
 
         self.fr_motor.setInverted(False)
         self.br_motor.setInverted(False)
+
+
+        for motor in [self.br_motor, self.bl_motor, self.fr_motor, self.fl_motor]:
+            motor.enableCurrentLimit(True)
+            motor.configPeakCurrentLimit(50, 0)
+            motor.configContinuousCurrentLimit(50, 0)
+            motor.configOpenLoopRamp(.5, 0)
 
         # self.robot_drive = wpilib.RobotDrive(self.fl_motor, self.bl_motor, self.fr_motor, self.br_motor)
 
@@ -65,9 +74,9 @@ class MyRobot(wpilib.TimedRobot):
 
         js_horizontal_2 = self.joystick.getRawAxis(4)
         x_speed = self.deadzone(self.joystick.getRawAxis(self.LX_AXIS))
-        y_speed = self.deadzone(self.joystick.getRawAxis(self.LY_AXIS))
-        z_speed = self.deadzone(js_horizontal_2)
-        fl, bl, fr, br = driveCartesian(x_speed, -y_speed, z_speed)
+        y_speed = self.deadzone(js_horizontal_2)
+        z_speed = self.deadzone(self.joystick.getRawAxis(self.LY_AXIS))
+        fl, bl, fr, br = driveCartesian(x_speed, y_speed, -z_speed)
         self.fl_motor.set(ctre.WPI_TalonSRX.ControlMode.PercentOutput, fl)
         self.bl_motor.set(ctre.WPI_TalonSRX.ControlMode.PercentOutput, bl)
         self.fr_motor.set(ctre.WPI_TalonSRX.ControlMode.PercentOutput, fr)
@@ -89,6 +98,13 @@ class MyRobot(wpilib.TimedRobot):
             self.back_lift.set(-1)
         else:
             self.back_lift.set(0)
+
+        if self.joystick.getRawButton(5):
+            self.arm.set(-self.arm_speed)
+        elif self.joystick.getRawButton(6):
+            self.arm.set(self.arm_speed)
+        else:
+            self.arm.set(0)
 
 
         self.back_lift_wheel.set(-self.joystick.getRawAxis(2))
