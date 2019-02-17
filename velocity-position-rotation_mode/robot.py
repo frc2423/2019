@@ -39,10 +39,20 @@ class RelativeGyro:
 class MyRobot(wpilib.TimedRobot):
     TIMEOUT_MS = 30
 
-    p = ntproperty('/encoders/p', .5, persistent = True)
-    i = ntproperty('/encoders/i', 0.0, persistent = True)
-    d = ntproperty('/encoders/d', 0.0, persistent = True)
-    f = ntproperty('/encoders/f', .7, persistent=True)
+    velocity_p = ntproperty('/encoders/velocity_p', .5, persistent = True)
+    velocity_i = ntproperty('/encoders/velocity_i', 0.0, persistent = True)
+    velocity_d = ntproperty('/encoders/velocity_d', 0.0, persistent = True)
+    velocity_f = ntproperty('/encoders/velocity_f', .7, persistent=True)
+
+    position_p = ntproperty('/encoders/position_p', .5, persistent=True)
+    position_i = ntproperty('/encoders/position_i', 0.0, persistent=True)
+    position_d = ntproperty('/encoders/position_d', 0.0, persistent=True)
+    position_f = ntproperty('/encoders/position_f', .7, persistent=True)
+
+    elevator_p = ntproperty('/encoders/elevator_p', 0.0, persistent=True)
+    elevator_i = ntproperty('/encoders/elevator_i', 0.0, persistent=True)
+    elevator_d = ntproperty('/encoders/elevator_d', 0.0, persistent=True)
+    elevator_f = ntproperty('/encoders/elevator_f', 0.0, persistent=True)
 
     back_lift_speed_up = ntproperty('/lifts/back_lift_speed_up', 1, persistent=True)
     back_lift_speed_down = ntproperty('/lifts/back_lift_speed_down', .3, persistent=True)
@@ -56,6 +66,8 @@ class MyRobot(wpilib.TimedRobot):
     talon_ramp = ntproperty('/encoders/talon_ramp', 0, persistent = True)
     continuous_current_limit = ntproperty('/encoder/continuous_current_limit', 0, persistent = True)
     peak_current_limit = ntproperty('/encoder/peak_current_limit', 0, persistent=True)
+
+    strafe_toggle = ntproperty('/encoders/strafe_toggle', False, persistent=True)
 
     displacement_multiplier = ntproperty("/encoders/displacement_multiplier", 1, persistent = True)
 
@@ -78,28 +90,13 @@ class MyRobot(wpilib.TimedRobot):
     ticks_per_rev_fr = ntproperty('/encoders/ticks_per_rev_fr', 8630, persistent = True) # done
     ticks_per_rev_br = ntproperty('/encoders/ticks_per_rev_br', 8630, persistent = True) # done
 
-    def setEncoderPids(self):
+    def setMotorPids(self, motor, p, i, d, f):
         print("setting encoder PIDs")
+        motor.config_kP(0, p, MyRobot.TIMEOUT_MS)
+        motor.config_kI(0, i, MyRobot.TIMEOUT_MS)
+        motor.config_kD(0, d, MyRobot.TIMEOUT_MS)
+        motor.config_kF(0, f, MyRobot.TIMEOUT_MS)
 
-        self.fl_motor.config_kP(0, self.p, MyRobot.TIMEOUT_MS)
-        self.fl_motor.config_kI(0, self.i, MyRobot.TIMEOUT_MS)
-        self.fl_motor.config_kD(0, self.d, MyRobot.TIMEOUT_MS)
-        self.fl_motor.config_kF(0, self.f, MyRobot.TIMEOUT_MS)
-
-        self.bl_motor.config_kP(0, self.p, MyRobot.TIMEOUT_MS)
-        self.bl_motor.config_kI(0, self.i, MyRobot.TIMEOUT_MS)
-        self.bl_motor.config_kD(0, self.d, MyRobot.TIMEOUT_MS)
-        self.bl_motor.config_kF(0, self.f, MyRobot.TIMEOUT_MS)
-
-        self.fr_motor.config_kP(0, self.p, MyRobot.TIMEOUT_MS)
-        self.fr_motor.config_kI(0, self.i, MyRobot.TIMEOUT_MS)
-        self.fr_motor.config_kD(0, self.d, MyRobot.TIMEOUT_MS)
-        self.fr_motor.config_kF(0, self.f, MyRobot.TIMEOUT_MS)
-
-        self.br_motor.config_kP(0, self.p, MyRobot.TIMEOUT_MS)
-        self.br_motor.config_kI(0, self.i, MyRobot.TIMEOUT_MS)
-        self.br_motor.config_kD(0, self.d, MyRobot.TIMEOUT_MS)
-        self.br_motor.config_kF(0, self.f, MyRobot.TIMEOUT_MS)
 
     turn_rate_p = ntproperty('/gyro/turn_rate_p', 0, persistent = True)
     turn_rate_i = ntproperty('/gyro/turn_rate_i', 0, persistent = True)
@@ -133,7 +130,7 @@ class MyRobot(wpilib.TimedRobot):
         self.bl_motor = ctre.wpi_talonsrx.WPI_TalonSRX(4)
         self.fr_motor = ctre.wpi_talonsrx.WPI_TalonSRX(7)
         self.fl_motor = ctre.wpi_talonsrx.WPI_TalonSRX(3)
-        
+
         self.arm = ctre.wpi_talonsrx.WPI_TalonSRX(0)
         self.front_lift = ctre.wpi_talonsrx.WPI_TalonSRX(6)
         self.back_lift = ctre.wpi_talonsrx.WPI_TalonSRX(2)
@@ -182,6 +179,25 @@ class MyRobot(wpilib.TimedRobot):
         self.desired_rate = 0
         self.pid_turn_rate = 0
 
+        self.driveStates = {
+            'velocity': Velocty_Mode(self),
+            'enter_position': Enter_Position_Mode(self),
+            'position': Position_Mode(self),
+            'enter_rotation': Enter_Rotation_Mode(self),
+            'rotation': Rotation_Mode(self),
+            'leave_special': Leave_Special_Mode(self)
+        }
+        self.drive_sm = State_Machine(self.driveStates, "Drive_sm")
+        self.drive_sm.set_state('velocity')
+
+        self.liftStates = {
+            'fully_raised': Fully_Raised(self),
+            'middle': Middle(self),
+            'fully_lowered': Fully_Lowered(self)
+        }
+        self.lift_sm = State_Machine(self.liftStates, "lift_sm")
+        self.lift_sm.set_state('fully_lowered')
+
         self.wheel_motors = [self.br_motor, self.bl_motor, self.fr_motor, self.fl_motor]
 
 
@@ -224,6 +240,7 @@ class MyRobot(wpilib.TimedRobot):
             motor.configContinuousCurrentLimit(int(self.continuous_current_limit), 0)
             motor.configClosedLoopRamp(self.talon_ramp, 0)
 
+
         try:
             if key == '/gyro/turn_rate_p':
                 self.angle_pid.setP(self.turn_rate_p)
@@ -233,7 +250,17 @@ class MyRobot(wpilib.TimedRobot):
                 self.angle_pid.setD(self.turn_rate_d)
 
             if "encoders" in key:
-                self.setEncoderPids()
+                if self.drive_sm.get_state() =='position':
+                    for motor in self.robot.wheel_motors:
+                        self.setMotorPids(motor, self.robot.position_p, self.robot.position_i, self.robot.position_d, self.robot.position_f)
+                else:
+                    for motor in self.robot.wheel_motors:
+                        self.setMotorPids(motor, self.robot.velocity_p, self.robot.velocity_i, self.robot.velocity_d, self.robot.velocity_f)
+
+                if 'elevator' in key:
+                    self.setMotorPids(self.front_lift, self.elevator_p, self.elevator_i, self.elevator_d, self.elevator_f)
+
+
         except Exception as oopsy:
             print("There was an oopsy: " + str(oopsy))
 
@@ -257,27 +284,8 @@ class MyRobot(wpilib.TimedRobot):
         self.fl_motor.setQuadraturePosition(0, 0)
         self.br_motor.setQuadraturePosition(0, 0)
         self.bl_motor.setQuadraturePosition(0, 0)
-        self.bl_motor.configOpenLoopRamp
+        #self.bl_motor.configOpenLoopRamp
 
-
-        self.driveStates = {
-            'velocity': Velocty_Mode(self),
-            'enter_position': Enter_Position_Mode(self),
-            'position': Position_Mode(self),
-            'enter_rotation': Enter_Rotation_Mode(self),
-            'rotation': Rotation_Mode(self),
-            'leave_special': Leave_Special_Mode(self)
-        }
-        self.drive_sm = State_Machine(self.driveStates, "Drive_sm")
-        self.drive_sm.set_state('velocity')
-
-        self.liftStates = {
-            'fully_raised': Fully_Raised(self),
-            'middle': Middle(self),
-            'fully_lowered': Fully_Lowered(self)
-        }
-        self.lift_sm = State_Machine(self.liftStates, "lift_sm")
-        self.lift_sm.set_state('fully_lowered')
 
     def on_pid_toggle(self):
         """When button 4 is pressed, use_pid is toggled"""
@@ -290,7 +298,11 @@ class MyRobot(wpilib.TimedRobot):
         self.prev_pid_toggle_btn_value = pid_toggle_btn_value
 
     def get_drive_cartesian(self):
-        return driveCartesian(0,
+        x_speed = 0
+        if self.strafe_toggle:
+            x_speed = self.deadzone(self.joystick.getRawAxis(self.LX_AXIS))
+
+        return driveCartesian(x_speed,
                               -self.deadzone(self.joystick.getRawAxis(self.LY_AXIS)),
                               self.deadzone(self.joystick.getRawAxis(self.RX_AXIS)),
                               self.deadzone(self.relativeGyro.getAngle()))
