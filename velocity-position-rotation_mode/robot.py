@@ -17,6 +17,7 @@ sys.path.append("..")
 from drive_modes.position import Enter_Position_Mode,Position_Mode
 from drive_modes.rotation import Enter_Rotation_Mode,Rotation_Mode
 from drive_modes.velocity import Leave_Special_Mode,Velocty_Mode
+from lift_modes import Fully_Raised, Middle, Fully_Lowered
 
 class RelativeGyro:
     def __init__(self, navx: AHRS):
@@ -49,6 +50,8 @@ class MyRobot(wpilib.TimedRobot):
     front_lift_speed_down = ntproperty('/lifts/front_lift_speed_down', .3, persistent=True)
     arm_speed_up = ntproperty('/lifts/arm_speed_up', 1, persistent=True)
     arm_speed_down = ntproperty('/lifts/arm_speed_down', .3, persistent=True)
+    front_raised_max = ntproperty('/lifts/front_raised_max', 1000, persistent=True)
+    front_bottom = ntproperty('/lifts/front_bottom', 0, persistent=True)
 
     talon_ramp = ntproperty('/encoders/talon_ramp', 0, persistent = True)
     continuous_current_limit = ntproperty('/encoder/continuous_current_limit', 0, persistent = True)
@@ -113,6 +116,11 @@ class MyRobot(wpilib.TimedRobot):
 
         self.BUTTON_RBUMPER = 6
         self.BUTTON_LBUMPER = 5
+
+        self.BUTTON_A = 1
+        self.BUTTON_B = 2
+        self.BUTTON_X = 3
+        self.BUTTON_Y = 4
 
         self.LY_AXIS = 1
         self.LX_AXIS = 0
@@ -260,10 +268,16 @@ class MyRobot(wpilib.TimedRobot):
             'rotation': Rotation_Mode(self),
             'leave_special': Leave_Special_Mode(self)
         }
-
-        self.drive_sm = State_Machine(self.driveStates)
-
+        self.drive_sm = State_Machine(self.driveStates, "Drive_sm")
         self.drive_sm.set_state('velocity')
+
+        self.liftStates = {
+            'fully_raised': Fully_Raised(self),
+            'middle': Middle(self),
+            'fully_lowered': Fully_Lowered(self)
+        }
+        self.lift_sm = State_Machine(self.liftStates, "lift_sm")
+        self.lift_sm.set_state('fully_lowered')
 
     def on_pid_toggle(self):
         """When button 4 is pressed, use_pid is toggled"""
@@ -283,16 +297,10 @@ class MyRobot(wpilib.TimedRobot):
 
     def teleopPeriodic(self):
         self.drive_sm.run()
+        self.lift_sm.run()
         # print(f"FL: {self.fl_motor.getQuadraturePosition()}    FR: {self.fr_motor.getQuadraturePosition()}    BL: {self.bl_motor.getQuadraturePosition()}    BR: {self.br_motor.getQuadraturePosition()}")
 
         #print ('Pitch', self.navx.getPitch())
-
-        if self.joystick.getRawButton(4):
-            self.front_lift.set(self.front_lift_speed_up)
-        elif self.joystick.getRawButton(1):
-            self.front_lift.set(-self.front_lift_speed_down)
-        else:
-            self.front_lift.set(0)
 
         if self.joystick.getRawButton(2):
             self.back_lift.set(1)
