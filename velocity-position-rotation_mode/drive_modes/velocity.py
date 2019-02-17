@@ -12,8 +12,8 @@ class Leave_Special_Mode:
 
     def run(self):
         self.robot.angle_pid.disable()
-        for motor in self.robot.wheel_motors:
-            self.robot.setMotorPids(motor, self.robot.velocity_p, self.robot.velocity_i, self.robot.velocity_d, self.robot.velocity_f)
+        self.robot.set_wheel_pids()
+
         if self.robot.deadzone(self.robot.joystick.getRawAxis(self.robot.LX_AXIS)) == 0 \
                 and self.robot.deadzone(self.robot.joystick.getRawAxis(self.robot.LY_AXIS)) == 0 \
                 and self.robot.deadzone(self.robot.joystick.getRawAxis(self.robot.RX_AXIS)) == 0 \

@@ -250,12 +250,7 @@ class MyRobot(wpilib.TimedRobot):
                 self.angle_pid.setD(self.turn_rate_d)
 
             if "encoders" in key:
-                if self.drive_sm.get_state() =='position':
-                    for motor in self.robot.wheel_motors:
-                        self.setMotorPids(motor, self.robot.position_p, self.robot.position_i, self.robot.position_d, self.robot.position_f)
-                else:
-                    for motor in self.robot.wheel_motors:
-                        self.setMotorPids(motor, self.robot.velocity_p, self.robot.velocity_i, self.robot.velocity_d, self.robot.velocity_f)
+                self.set_wheel_pids()
 
                 if 'elevator' in key:
                     self.setMotorPids(self.front_lift, self.elevator_p, self.elevator_i, self.elevator_d, self.elevator_f)
@@ -264,7 +259,15 @@ class MyRobot(wpilib.TimedRobot):
         except Exception as oopsy:
             print("There was an oopsy: " + str(oopsy))
 
-
+    def set_wheel_pids(self):
+        if self.drive_sm.get_state() == 'position':
+            for motor in self.robot.wheel_motors:
+                self.setMotorPids(motor, self.robot.position_p, self.robot.position_i, self.robot.position_d,
+                                  self.robot.position_f)
+        else:
+            for motor in self.robot.wheel_motors:
+                self.setMotorPids(motor, self.robot.velocity_p, self.robot.velocity_i, self.robot.velocity_d,
+                                  self.robot.velocity_f)
 
     def autonomousInit(self):
         """This function is run once each time the robot enters autonomous mode."""

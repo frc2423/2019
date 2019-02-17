@@ -11,8 +11,8 @@ class Enter_Position_Mode:
 
     def run(self):
         fl, bl, fr, br = self.robot.get_drive_cartesian()
-        for motor in self.robot.wheel_motors:
-            self.robot.setMotorPids(motor, self.robot.position_p, self.robot.position_i, self.robot.position_d, self.robot.position_f)
+        self.robot.set_wheel_pids()
+
         self.robot.fl_motor.setQuadraturePosition(int(fl), self.robot.TIMEOUT_MS)
         self.robot.fr_motor.setQuadraturePosition(int(fr), self.robot.TIMEOUT_MS)
         self.robot.br_motor.setQuadraturePosition(int(br), self.robot.TIMEOUT_MS)
