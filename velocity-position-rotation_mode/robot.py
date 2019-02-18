@@ -69,6 +69,8 @@ class MyRobot(wpilib.TimedRobot):
 
     strafe_toggle = ntproperty('/encoders/strafe_toggle', False, persistent=True)
 
+    lift_limits = ntproperty('/encoders/lift_limits', False, persistent=True)
+
     displacement_multiplier = ntproperty("/encoders/displacement_multiplier", 1, persistent = True)
 
     velocity_mode = ntproperty('/encoders/velocity_mode', True)
@@ -164,7 +166,6 @@ class MyRobot(wpilib.TimedRobot):
         self.fl_motor.setSensorPhase(True)
         #self.fr_motor.setSensorPhase(True)
         self.br_motor.setSensorPhase(True)
-        self.front_lift.setSensorPhase(True)
 
         self.deadzone_amount = 0.15
 
@@ -343,9 +344,9 @@ class MyRobot(wpilib.TimedRobot):
         else:
             self.back_lift.set(0)
 
-        if self.joystick.getPOV(0) == 180:
+        if self.joystick.getRawButton(1):
             self.arm.set(-self.arm_speed_down)
-        elif self.joystick.getPOV(0) == 0:
+        elif self.joystick.getRawButton(4):
             self.arm.set(self.arm_speed_up)
         else:
             self.arm.set(0)
