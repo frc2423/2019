@@ -17,7 +17,7 @@ sys.path.append("..")
 from drive_modes.position import Enter_Position_Mode,Position_Mode
 from drive_modes.rotation import Enter_Rotation_Mode,Rotation_Mode
 from drive_modes.velocity import Leave_Special_Mode,Velocty_Mode
-from lift_modes import Fully_Raised, Middle, Fully_Lowered
+from lift_modes import Fully_Raised, Middle, Fully_Lowered, Go_To_Height
 
 class RelativeGyro:
     def __init__(self, navx: AHRS):
@@ -109,6 +109,16 @@ class MyRobot(wpilib.TimedRobot):
 
     max_turn_rate = ntproperty("/gyro/max_turn_rate", 120, persistent = True)
 
+    front_lift_heights = ntproperty("/lifts/front_lift_heights", [1,2,3,4,5,6], persistent=True)
+    front_lift_heights_index = 0
+    def front_lift_increment(self):
+        if self.front_lift_heights_index < (len(self.front_lift_heights) - 1):
+            self.front_lift_heights_index += 1
+
+    def front_lift_decrement(self):
+        if self.front_lift_heights_index > 0:
+            self.front_lift_heights_index -= 1
+
     def robotInit(self):
 
         self.BUTTON_RBUMPER = 6
@@ -123,6 +133,12 @@ class MyRobot(wpilib.TimedRobot):
         self.LX_AXIS = 0
         self.RX_AXIS = 4
         self.RY_AXIS = 5
+
+        self.LEFT_JOYSTICK_BUTTON = 9
+        self.RIGHT_JOYSTICK_BUTTON = 10
+
+        self.BACK_BUTTON = 7
+        self.START_BUTTON = 8
 
         self.rev_per_ft = 12 / (math.pi * self.wheel_diameter)
 
@@ -148,6 +164,7 @@ class MyRobot(wpilib.TimedRobot):
         self.fl_motor.setSensorPhase(True)
         #self.fr_motor.setSensorPhase(True)
         self.br_motor.setSensorPhase(True)
+        self.front_lift.setSensorPhase(True)
 
         self.deadzone_amount = 0.15
 
@@ -193,7 +210,8 @@ class MyRobot(wpilib.TimedRobot):
         self.liftStates = {
             'fully_raised': Fully_Raised(self),
             'middle': Middle(self),
-            'fully_lowered': Fully_Lowered(self)
+            'fully_lowered': Fully_Lowered(self),
+            'go_to_height': Go_To_Height(self)
         }
         self.lift_sm = State_Machine(self.liftStates, "lift_sm")
         self.lift_sm.set_state('fully_lowered')
@@ -261,13 +279,13 @@ class MyRobot(wpilib.TimedRobot):
 
     def set_wheel_pids(self):
         if self.drive_sm.get_state() == 'position':
-            for motor in self.robot.wheel_motors:
-                self.setMotorPids(motor, self.robot.position_p, self.robot.position_i, self.robot.position_d,
-                                  self.robot.position_f)
+            for motor in self.wheel_motors:
+                self.setMotorPids(motor, self.position_p, self.position_i, self.position_d,
+                                  self.position_f)
         else:
-            for motor in self.robot.wheel_motors:
-                self.setMotorPids(motor, self.robot.velocity_p, self.robot.velocity_i, self.robot.velocity_d,
-                                  self.robot.velocity_f)
+            for motor in self.wheel_motors:
+                self.setMotorPids(motor, self.velocity_p, self.velocity_i, self.velocity_d,
+                                  self.velocity_f)
 
     def autonomousInit(self):
         """This function is run once each time the robot enters autonomous mode."""
@@ -309,6 +327,7 @@ class MyRobot(wpilib.TimedRobot):
                               -self.deadzone(self.joystick.getRawAxis(self.LY_AXIS)),
                               self.deadzone(self.joystick.getRawAxis(self.RX_AXIS)),
                               self.deadzone(self.relativeGyro.getAngle()))
+
 
     def teleopPeriodic(self):
         self.drive_sm.run()
