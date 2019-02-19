@@ -42,6 +42,9 @@ class Velocty_Mode:
             fr = self.robot.to_motor_speed(fr * self.robot.max_speed, self.robot.ticks_per_rev_fr)
             br = self.robot.to_motor_speed(br * self.robot.max_speed, self.robot.ticks_per_rev_br)
 
+
+            #print('desired, current:', br, self.robot.br_motor.getQuadratureVelocity())
+
             self.robot.fl_motor.set(ctre.WPI_TalonSRX.ControlMode.Velocity, fl)
             self.robot.bl_motor.set(ctre.WPI_TalonSRX.ControlMode.Velocity, bl)
             self.robot.fr_motor.set(ctre.WPI_TalonSRX.ControlMode.Velocity, fr)

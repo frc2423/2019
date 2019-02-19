@@ -39,10 +39,10 @@ class RelativeGyro:
 class MyRobot(wpilib.TimedRobot):
     TIMEOUT_MS = 30
 
-    velocity_p = ntproperty('/encoders/velocity_p', .5, persistent = True)
-    velocity_i = ntproperty('/encoders/velocity_i', 0.0, persistent = True)
+    velocity_p = ntproperty('/encoders/velocity_p', .1, persistent = True)
+    velocity_i = ntproperty('/encoders/velocity_i', 0.0001, persistent = True)
     velocity_d = ntproperty('/encoders/velocity_d', 0.0, persistent = True)
-    velocity_f = ntproperty('/encoders/velocity_f', .7, persistent=True)
+    velocity_f = ntproperty('/encoders/velocity_f', .1, persistent=True)
 
     position_p = ntproperty('/encoders/position_p', .5, persistent=True)
     position_i = ntproperty('/encoders/position_i', 0.0, persistent=True)
@@ -84,7 +84,7 @@ class MyRobot(wpilib.TimedRobot):
 
     ticks_per_rev = ntproperty('/encoders/ticks_per_rev', 1440, persistent = True)
     wheel_diameter = ntproperty('/encoders/wheel_diameter', 6, persistent = True)
-    max_speed = ntproperty('/encoders/max_speed', 1, persistent = True)
+    max_speed = ntproperty('/encoders/max_speed', 8, persistent = True)
     wheel_diameter = ntproperty('/encoders/wheel_diameter', 6, persistent = True)
 
     ticks_per_rev_fl = ntproperty('/encoders/ticks_per_rev_fl', 8630, persistent = True) # done
@@ -98,6 +98,7 @@ class MyRobot(wpilib.TimedRobot):
         motor.config_kI(0, i, MyRobot.TIMEOUT_MS)
         motor.config_kD(0, d, MyRobot.TIMEOUT_MS)
         motor.config_kF(0, f, MyRobot.TIMEOUT_MS)
+        
 
 
     turn_rate_p = ntproperty('/gyro/turn_rate_p', 0, persistent = True)
@@ -111,7 +112,7 @@ class MyRobot(wpilib.TimedRobot):
 
     max_turn_rate = ntproperty("/gyro/max_turn_rate", 120, persistent = True)
 
-    front_lift_heights = ntproperty("/lifts/front_lift_heights", [1,2,3,4,5,6], persistent=True)
+    front_lift_heights = [9700, 21500, 33000]#ntproperty("/lifts/front_lift_heights", [1,2,3,4,5,6], persistent=True)
     front_lift_heights_index = 0
     def front_lift_increment(self):
         if self.front_lift_heights_index < (len(self.front_lift_heights) - 1):
@@ -136,6 +137,8 @@ class MyRobot(wpilib.TimedRobot):
         self.RX_AXIS = 4
         self.RY_AXIS = 5
 
+        self.R_TRIGGER = 3
+
         self.LEFT_JOYSTICK_BUTTON = 9
         self.RIGHT_JOYSTICK_BUTTON = 10
 
@@ -156,16 +159,20 @@ class MyRobot(wpilib.TimedRobot):
 
         self.fr_motor.setInverted(True)
         self.br_motor.setInverted(True)
+        
 
         self.fl_motor.configSelectedFeedbackSensor(ctre.FeedbackDevice.QuadEncoder, 0, MyRobot.TIMEOUT_MS)
         self.bl_motor.configSelectedFeedbackSensor(ctre.FeedbackDevice.QuadEncoder, 0, MyRobot.TIMEOUT_MS)
         self.fr_motor.configSelectedFeedbackSensor(ctre.FeedbackDevice.QuadEncoder, 0, MyRobot.TIMEOUT_MS)
         self.br_motor.configSelectedFeedbackSensor(ctre.FeedbackDevice.QuadEncoder, 0, MyRobot.TIMEOUT_MS)
 
+        self.front_lift.configSelectedFeedbackSensor(ctre.FeedbackDevice.QuadEncoder, 0, MyRobot.TIMEOUT_MS)
+
         # Reverse negative encoder values
         self.fl_motor.setSensorPhase(True)
         #self.fr_motor.setSensorPhase(True)
         self.br_motor.setSensorPhase(True)
+        self.front_lift.setSensorPhase(True)
 
         self.deadzone_amount = 0.15
 
@@ -219,6 +226,8 @@ class MyRobot(wpilib.TimedRobot):
 
         self.wheel_motors = [self.br_motor, self.bl_motor, self.fr_motor, self.fl_motor]
 
+        wpilib.CameraServer.launch()
+
 
 
         def normalized_navx():
@@ -253,11 +262,12 @@ class MyRobot(wpilib.TimedRobot):
             return angle
 
     def entry_listener(self, key, value, is_new):
-        for motor in self.wheel_motors:
-            motor.enableCurrentLimit(True)
-            motor.configPeakCurrentLimit(int(self.peak_current_limit), 0)
-            motor.configContinuousCurrentLimit(int(self.continuous_current_limit), 0)
-            motor.configClosedLoopRamp(self.talon_ramp, 0)
+        if hasattr(self, 'wheel_motors'):
+            for motor in self.wheel_motors:
+                motor.enableCurrentLimit(True)
+                motor.configPeakCurrentLimit(int(self.peak_current_limit), 0)
+                motor.configContinuousCurrentLimit(int(self.continuous_current_limit), 0)
+                motor.configClosedLoopRamp(self.talon_ramp, 0)
 
 
         try:
@@ -302,6 +312,7 @@ class MyRobot(wpilib.TimedRobot):
         self.navx.reset()
         self.angle_pid.disable()
 
+        self.front_lift.setQuadraturePosition(0, 0)
         self.fr_motor.setQuadraturePosition(0, 0)
         self.fl_motor.setQuadraturePosition(0, 0)
         self.br_motor.setQuadraturePosition(0, 0)
@@ -333,6 +344,7 @@ class MyRobot(wpilib.TimedRobot):
     def teleopPeriodic(self):
         self.drive_sm.run()
         self.lift_sm.run()
+        print("elevator pid: ", self.get_lift_position(), "lift state: ", self.lift_sm.get_state(), "   target position: ",self.front_lift_heights[self.front_lift_heights_index])
         # print(f"FL: {self.fl_motor.getQuadraturePosition()}    FR: {self.fr_motor.getQuadraturePosition()}    BL: {self.bl_motor.getQuadraturePosition()}    BR: {self.br_motor.getQuadraturePosition()}")
 
         #print ('Pitch', self.navx.getPitch())
@@ -350,8 +362,14 @@ class MyRobot(wpilib.TimedRobot):
             self.arm.set(self.arm_speed_up)
         else:
             self.arm.set(0)
+        
+        self.back_lift_wheel.set(-self.joystick.getRawAxis(self.R_TRIGGER))
 
         #print(f"FL: {self.fl_motor.getQuadraturePosition()}    FR: {self.fr_motor.getQuadraturePosition()}    BL: {self.bl_motor.getQuadraturePosition()}    BR: {self.br_motor.getQuadraturePosition()}")
+
+
+    def get_lift_position(self):
+        return -self.front_lift.getQuadraturePosition()
 
     def regular_mec_drive(self):
         x = self.joystick.getRawAxis(0)
