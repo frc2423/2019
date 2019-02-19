@@ -159,7 +159,7 @@ class MyRobot(wpilib.TimedRobot):
 
         self.fr_motor.setInverted(True)
         self.br_motor.setInverted(True)
-        
+        self.arm.setInverted(True)
 
         self.fl_motor.configSelectedFeedbackSensor(ctre.FeedbackDevice.QuadEncoder, 0, MyRobot.TIMEOUT_MS)
         self.bl_motor.configSelectedFeedbackSensor(ctre.FeedbackDevice.QuadEncoder, 0, MyRobot.TIMEOUT_MS)
@@ -182,11 +182,6 @@ class MyRobot(wpilib.TimedRobot):
         self.js_startAngle = 0
         self.rot_startNavx = 0
 
-        # self.spinman = ctre.wpi_talonsrx.WPI_TalonSRX(5)
-
-        self.littlearms1 = wpilib.Servo(7)
-        self.littlearms2 = wpilib.Servo(8)
-
         self.joystick = wpilib.Joystick(0)
 
         NetworkTables.addEntryListener(self.entry_listener)
@@ -199,10 +194,17 @@ class MyRobot(wpilib.TimedRobot):
 
         self.timer = wpilib.Timer()
 
+        self.open_state = .02
+        self.closed_state = .35
+
+        self.arm_pot = wpilib.AnalogPotentiometer(0)
+        self.arm_pid = wpilib.PIDController(3,0,0, self.arm_pot.get, self.pid_output)
+
         self.init_time = 0
 
         self.desired_rate = 0
         self.pid_turn_rate = 0
+
 
         self.driveStates = {
             'velocity': Velocty_Mode(self),
@@ -243,7 +245,9 @@ class MyRobot(wpilib.TimedRobot):
         self.turn_rate_values = [0] * 10
 
 
-
+    def pid_output(self, output):
+        print('output:', output)
+        self.arm.set(output)
 
     def set_pid_turn_rate(self, turn_rate):
         self.pid_turn_rate = -turn_rate
@@ -311,6 +315,11 @@ class MyRobot(wpilib.TimedRobot):
         self.desired_angle = 0
         self.navx.reset()
         self.angle_pid.disable()
+        
+        self.arm_pid.enable()
+        self.arm_pid.setSetpoint(self.open_state)
+
+        self.prev_button1 = False
 
         self.front_lift.setQuadraturePosition(0, 0)
         self.fr_motor.setQuadraturePosition(0, 0)
@@ -344,7 +353,7 @@ class MyRobot(wpilib.TimedRobot):
     def teleopPeriodic(self):
         self.drive_sm.run()
         self.lift_sm.run()
-        print("elevator pid: ", self.get_lift_position(), "lift state: ", self.lift_sm.get_state(), "   target position: ",self.front_lift_heights[self.front_lift_heights_index])
+        #print("elevator pid: ", self.get_lift_position(), "lift state: ", self.lift_sm.get_state(), "   target position: ",self.front_lift_heights[self.front_lift_heights_index])
         # print(f"FL: {self.fl_motor.getQuadraturePosition()}    FR: {self.fr_motor.getQuadraturePosition()}    BL: {self.bl_motor.getQuadraturePosition()}    BR: {self.br_motor.getQuadraturePosition()}")
 
         #print ('Pitch', self.navx.getPitch())
@@ -356,14 +365,20 @@ class MyRobot(wpilib.TimedRobot):
         else:
             self.back_lift.set(0)
 
-        if self.joystick.getRawButton(1):
-            self.arm.set(-self.arm_speed_down)
-        elif self.joystick.getRawButton(4):
-            self.arm.set(self.arm_speed_up)
-        else:
-            self.arm.set(0)
+         # button 1 toggles pid_position
+        button1 = self.joystick.getRawButton(1)
+        print(self.arm)
+        if button1 and not self.prev_button1:
+            if (self.arm_pid.getSetpoint() == self.open_state):
+                self.arm_pid.setSetpoint(self.closed_state)
+            else:
+                self.arm_pid.setSetpoint(self.open_state)
         
         self.back_lift_wheel.set(-self.joystick.getRawAxis(self.R_TRIGGER))
+
+
+        self.prev_button1 = button1
+        
 
         #print(f"FL: {self.fl_motor.getQuadraturePosition()}    FR: {self.fr_motor.getQuadraturePosition()}    BL: {self.bl_motor.getQuadraturePosition()}    BR: {self.br_motor.getQuadraturePosition()}")
 
