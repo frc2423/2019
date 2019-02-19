@@ -39,10 +39,10 @@ class RelativeGyro:
 class MyRobot(wpilib.TimedRobot):
     TIMEOUT_MS = 30
 
-    velocity_p = ntproperty('/encoders/velocity_p', .1, persistent = True)
-    velocity_i = ntproperty('/encoders/velocity_i', 0.0001, persistent = True)
-    velocity_d = ntproperty('/encoders/velocity_d', 0.0, persistent = True)
-    velocity_f = ntproperty('/encoders/velocity_f', .1, persistent=True)
+    velocity_p = .1 #ntproperty('/encoders/velocity_p', .1, persistent = True)
+    velocity_i = .0001 #ntproperty('/encoders/velocity_i', 0.0001, persistent = True)
+    velocity_d = 0 #ntproperty('/encoders/velocity_d', 0.0, persistent = True)
+    velocity_f = .1 #ntproperty('/encoders/velocity_f', .1, persistent=True)
 
     position_p = ntproperty('/encoders/position_p', .5, persistent=True)
     position_i = ntproperty('/encoders/position_i', 0.0, persistent=True)
@@ -67,8 +67,6 @@ class MyRobot(wpilib.TimedRobot):
     continuous_current_limit = ntproperty('/encoder/continuous_current_limit', 0, persistent = True)
     peak_current_limit = ntproperty('/encoder/peak_current_limit', 0, persistent=True)
 
-    strafe_toggle = ntproperty('/encoders/strafe_toggle', False, persistent=True)
-
     lift_limits = ntproperty('/encoders/lift_limits', False, persistent=True)
 
     displacement_multiplier = ntproperty("/encoders/displacement_multiplier", 1, persistent = True)
@@ -84,13 +82,13 @@ class MyRobot(wpilib.TimedRobot):
 
     ticks_per_rev = ntproperty('/encoders/ticks_per_rev', 1440, persistent = True)
     wheel_diameter = ntproperty('/encoders/wheel_diameter', 6, persistent = True)
-    max_speed = ntproperty('/encoders/max_speed', 8, persistent = True)
+    max_speed = 8 #ntproperty('/encoders/max_speed', 8, persistent = True)
     wheel_diameter = ntproperty('/encoders/wheel_diameter', 6, persistent = True)
 
-    ticks_per_rev_fl = ntproperty('/encoders/ticks_per_rev_fl', 8630, persistent = True) # done
-    ticks_per_rev_bl = ntproperty('/encoders/ticks_per_rev_bl', 8630, persistent = True) # done
-    ticks_per_rev_fr = ntproperty('/encoders/ticks_per_rev_fr', 8630, persistent = True) # done
-    ticks_per_rev_br = ntproperty('/encoders/ticks_per_rev_br', 8630, persistent = True) # done
+    ticks_per_rev_fl = 12000 #ntproperty('/encoders/ticks_per_rev_fl', 8630, persistent = True) # done
+    ticks_per_rev_bl = 12000 #ntproperty('/encoders/ticks_per_rev_bl', 8630, persistent = True) # done
+    ticks_per_rev_fr = 12000 #ntproperty('/encoders/ticks_per_rev_fr', 8630, persistent = True) # done
+    ticks_per_rev_br = 12000 #ntproperty('/encoders/ticks_per_rev_br', 8630, persistent = True) # done
 
     def setMotorPids(self, motor, p, i, d, f):
         print("setting encoder PIDs")
@@ -112,7 +110,7 @@ class MyRobot(wpilib.TimedRobot):
 
     max_turn_rate = ntproperty("/gyro/max_turn_rate", 120, persistent = True)
 
-    front_lift_heights = [9700, 21500, 33000]#ntproperty("/lifts/front_lift_heights", [1,2,3,4,5,6], persistent=True)
+    front_lift_heights = [0, 9700, 21500, 31500]#ntproperty("/lifts/front_lift_heights", [1,2,3,4,5,6], persistent=True)
     front_lift_heights_index = 0
     def front_lift_increment(self):
         if self.front_lift_heights_index < (len(self.front_lift_heights) - 1):
@@ -157,8 +155,8 @@ class MyRobot(wpilib.TimedRobot):
         self.back_lift = ctre.wpi_talonsrx.WPI_TalonSRX(2)
         self.back_lift_wheel = ctre.wpi_talonsrx.WPI_TalonSRX(1)
 
-        self.fr_motor.setInverted(True)
-        self.br_motor.setInverted(True)
+        self.fl_motor.setInverted(True)
+        self.bl_motor.setInverted(True)
         self.arm.setInverted(True)
 
         self.fl_motor.configSelectedFeedbackSensor(ctre.FeedbackDevice.QuadEncoder, 0, MyRobot.TIMEOUT_MS)
@@ -173,6 +171,9 @@ class MyRobot(wpilib.TimedRobot):
         #self.fr_motor.setSensorPhase(True)
         self.br_motor.setSensorPhase(True)
         self.front_lift.setSensorPhase(True)
+
+        #self.front_lift.configNominalOutputForward(.3, 0)
+        #self.front_lift.configNominalOutputReverse(-.3, 0)
 
         self.deadzone_amount = 0.15
 
@@ -246,7 +247,6 @@ class MyRobot(wpilib.TimedRobot):
 
 
     def pid_output(self, output):
-        print('output:', output)
         self.arm.set(output)
 
     def set_pid_turn_rate(self, turn_rate):
@@ -266,13 +266,6 @@ class MyRobot(wpilib.TimedRobot):
             return angle
 
     def entry_listener(self, key, value, is_new):
-        if hasattr(self, 'wheel_motors'):
-            for motor in self.wheel_motors:
-                motor.enableCurrentLimit(True)
-                motor.configPeakCurrentLimit(int(self.peak_current_limit), 0)
-                motor.configContinuousCurrentLimit(int(self.continuous_current_limit), 0)
-                motor.configClosedLoopRamp(self.talon_ramp, 0)
-
 
         try:
             if key == '/gyro/turn_rate_p':
@@ -321,6 +314,13 @@ class MyRobot(wpilib.TimedRobot):
 
         self.prev_button1 = False
 
+        self.button = False
+
+        self.lift_target = 0
+
+        self.front_lift_heights_index = 0
+
+
         self.front_lift.setQuadraturePosition(0, 0)
         self.fr_motor.setQuadraturePosition(0, 0)
         self.fl_motor.setQuadraturePosition(0, 0)
@@ -340,9 +340,7 @@ class MyRobot(wpilib.TimedRobot):
         self.prev_pid_toggle_btn_value = pid_toggle_btn_value
 
     def get_drive_cartesian(self):
-        x_speed = 0
-        if self.strafe_toggle:
-            x_speed = self.deadzone(self.joystick.getRawAxis(self.LX_AXIS))
+        x_speed = self.deadzone(self.joystick.getRawAxis(self.LX_AXIS))
 
         return driveCartesian(x_speed,
                               -self.deadzone(self.joystick.getRawAxis(self.LY_AXIS)),
@@ -352,11 +350,45 @@ class MyRobot(wpilib.TimedRobot):
 
     def teleopPeriodic(self):
         self.drive_sm.run()
-        self.lift_sm.run()
+        #self.lift_sm.run()
         #print("elevator pid: ", self.get_lift_position(), "lift state: ", self.lift_sm.get_state(), "   target position: ",self.front_lift_heights[self.front_lift_heights_index])
         # print(f"FL: {self.fl_motor.getQuadraturePosition()}    FR: {self.fr_motor.getQuadraturePosition()}    BL: {self.bl_motor.getQuadraturePosition()}    BR: {self.br_motor.getQuadraturePosition()}")
-
+        #print(f'p: {self.velocity_p}   i: {self.velocity_i}   d:{self.velocity_d}   f: {self.velocity_f}')
         #print ('Pitch', self.navx.getPitch())
+        lift_speed = 30
+        
+        if self.joystick.getPOV(0) == 0 and self.button == False:
+            self.button = True
+            self.front_lift_increment()
+            print('lift height index: ', self.front_lift_heights_index)
+            self.lift_target = self.front_lift_heights[self.front_lift_heights_index]
+        elif self.joystick.getPOV(0) == 180 and self.button == False:
+            self.front_lift_decrement()
+            self.button = True
+            print('lift height index: ', self.front_lift_heights_index)
+            self.lift_target = self.front_lift_heights[self.front_lift_heights_index]
+        elif ((self.joystick.getPOV(0) == 0) or (self.joystick.getPOV(0) == 180)) and self.button == True:
+            pass
+        else:
+            self.button = False
+
+        if self.joystick.getPOV(0) == 90:
+            if self.lift_target < 31500:
+                self.lift_target += lift_speed
+        elif self.joystick.getPOV(0) == 270:
+            if self.lift_target > -1000:
+                self.lift_target -= lift_speed
+        
+        print(self.front_lift.getClosedLoopError(0))
+
+        if (self.front_lift.getClosedLoopError(0) < 200) and self.lift_target <= self.front_lift_heights[1]:
+            self.front_lift.set(0)
+            self.front_lift.configNominalOutputForward
+        
+
+
+
+        self.front_lift.set(ctre.WPI_TalonSRX.ControlMode.Position, self.lift_target)
 
         if self.joystick.getRawButton(2):
             self.back_lift.set(1)
@@ -367,7 +399,7 @@ class MyRobot(wpilib.TimedRobot):
 
          # button 1 toggles pid_position
         button1 = self.joystick.getRawButton(1)
-        print(self.arm)
+        #print(self.arm)
         if button1 and not self.prev_button1:
             if (self.arm_pid.getSetpoint() == self.open_state):
                 self.arm_pid.setSetpoint(self.closed_state)
@@ -391,7 +423,7 @@ class MyRobot(wpilib.TimedRobot):
         y = self.joystick.getRawAxis(1)
         rot = self.joystick.getRawAxis(4)
 
-        self.robot_drive.mecanumDrive_Cartesian(self.dead_zone(x), self.dead_zone(y), self.dead_zone(rot), 0)
+        self_drive.mecanumDrive_Cartesian(self.dead_zone(x), self.dead_zone(y), self.dead_zone(rot), 0)
 
     def teleop_arms(self):
         if self.joystick.getRawAxis(2) > .2:

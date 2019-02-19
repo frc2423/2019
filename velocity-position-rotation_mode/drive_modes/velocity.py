@@ -28,13 +28,12 @@ class Velocty_Mode:
         self.robot = robot
 
     def run(self):
+
         js_horizontal_2 = self.robot.joystick.getRawAxis(4)
-        x_speed = 0
-        if self.robot.strafe_toggle:
-            x_speed = self.robot.deadzone(self.robot.joystick.getRawAxis(self.robot.LX_AXIS), self.robot.deadzone_amount)
-        y_speed = self.robot.deadzone(self.robot.joystick.getRawAxis(self.robot.LY_AXIS), self.robot.deadzone_amount)
-        z_speed = self.robot.deadzone(js_horizontal_2)
-        fl, bl, fr, br = driveCartesian(x_speed, -y_speed, z_speed)
+        x_speed = self.robot.deadzone(self.robot.joystick.getRawAxis(self.robot.LX_AXIS))
+        y_speed = self.robot.deadzone(self.robot.joystick.getRawAxis(self.robot.LY_AXIS))
+        z_speed = self.robot.deadzone(self.robot.joystick.getRawAxis(4))
+        fl, bl, fr, br = driveCartesian(-x_speed, y_speed, -z_speed)
 
         if self.robot.velocity_mode:
             fl = self.robot.to_motor_speed(fl * self.robot.max_speed, self.robot.ticks_per_rev_fl)
@@ -50,10 +49,12 @@ class Velocty_Mode:
             self.robot.fr_motor.set(ctre.WPI_TalonSRX.ControlMode.Velocity, fr)
             self.robot.br_motor.set(ctre.WPI_TalonSRX.ControlMode.Velocity, br)
         else:
-            self.robot.fl_motor.set(ctre.WPI_TalonSRX.ControlMode.PercentOutput, fl)
-            self.robot.bl_motor.set(ctre.WPI_TalonSRX.ControlMode.PercentOutput, bl)
-            self.robot.fr_motor.set(ctre.WPI_TalonSRX.ControlMode.PercentOutput, fr)
-            self.robot.br_motor.set(ctre.WPI_TalonSRX.ControlMode.PercentOutput, br)
+
+            #print('fl, bl, fr, br', self.robot.fl_motor.get(), bl, fr, br)
+            self.robot.fl_motor.set(fl)
+            self.robot.bl_motor.set(bl)
+            self.robot.fr_motor.set(fr)
+            self.robot.br_motor.set(br)
 
 
         # print(f"Error:   FL: {self.robot.fl_motor.getClosedLoopError(0)}    BL: {self.robot.bl_motor.getClosedLoopError(0)}   FR: {self.robot.fr_motor.getClosedLoopError(0)}   BR: {self.robot.br_motor.getClosedLoopError(0)}")
