@@ -136,6 +136,7 @@ class MyRobot(wpilib.TimedRobot):
         self.RY_AXIS = 5
 
         self.R_TRIGGER = 3
+        self.L_TRIGGER = 2
 
         self.LEFT_JOYSTICK_BUTTON = 9
         self.RIGHT_JOYSTICK_BUTTON = 10
@@ -171,9 +172,6 @@ class MyRobot(wpilib.TimedRobot):
         #self.fr_motor.setSensorPhase(True)
         self.br_motor.setSensorPhase(True)
         self.front_lift.setSensorPhase(True)
-
-        #self.front_lift.configNominalOutputForward(.3, 0)
-        #self.front_lift.configNominalOutputReverse(-.3, 0)
 
         self.deadzone_amount = 0.15
 
@@ -279,7 +277,7 @@ class MyRobot(wpilib.TimedRobot):
                 self.set_wheel_pids()
 
                 if 'elevator' in key:
-                    self.setMotorPids(self.front_lift, self.elevator_p, self.elevator_i, self.elevator_d, self.elevator_f)
+                    pass#self.setMotorPids(self.front_lift, self.elevator_p, self.elevator_i, self.elevator_d, self.elevator_f)
 
 
         except Exception as oopsy:
@@ -355,40 +353,42 @@ class MyRobot(wpilib.TimedRobot):
         # print(f"FL: {self.fl_motor.getQuadraturePosition()}    FR: {self.fr_motor.getQuadraturePosition()}    BL: {self.bl_motor.getQuadraturePosition()}    BR: {self.br_motor.getQuadraturePosition()}")
         #print(f'p: {self.velocity_p}   i: {self.velocity_i}   d:{self.velocity_d}   f: {self.velocity_f}')
         #print ('Pitch', self.navx.getPitch())
-        lift_speed = 30
         
-        if self.joystick.getPOV(0) == 0 and self.button == False:
+        lift_speed = 45
+        
+        if self.joystick.getRawButton(6) and self.button == False:
             self.button = True
             self.front_lift_increment()
-            print('lift height index: ', self.front_lift_heights_index)
+            self.setMotorPids(self.front_lift, 1, 0, 0, 0)
             self.lift_target = self.front_lift_heights[self.front_lift_heights_index]
-        elif self.joystick.getPOV(0) == 180 and self.button == False:
+        elif self.joystick.getRawButton(5) and self.button == False:
             self.front_lift_decrement()
             self.button = True
-            print('lift height index: ', self.front_lift_heights_index)
+            self.setMotorPids(self.front_lift, .01, 0, 0, 0)
             self.lift_target = self.front_lift_heights[self.front_lift_heights_index]
-        elif ((self.joystick.getPOV(0) == 0) or (self.joystick.getPOV(0) == 180)) and self.button == True:
+        elif ((self.joystick.getRawButton(6)) or (self.joystick.getRawButton(5))) and self.button == True:
             pass
         else:
             self.button = False
 
-        if self.joystick.getPOV(0) == 90:
+        if self.deadzone(self.joystick.getRawAxis(self.R_TRIGGER)) > 0:
             if self.lift_target < 31500:
-                self.lift_target += lift_speed
-        elif self.joystick.getPOV(0) == 270:
+                self.lift_target += (lift_speed * self.joystick.getRawAxis(self.R_TRIGGER))
+        elif self.deadzone(self.joystick.getRawAxis(self.L_TRIGGER)) > 0:
             if self.lift_target > -1000:
-                self.lift_target -= lift_speed
+                self.lift_target -= (lift_speed * self.joystick.getRawAxis(self.L_TRIGGER))
         
-        print(self.front_lift.getClosedLoopError(0))
-
-        if (self.front_lift.getClosedLoopError(0) < 200) and self.lift_target <= self.front_lift_heights[1]:
-            self.front_lift.set(0)
-            self.front_lift.configNominalOutputForward
+        #print(self.front_lift.getClosedLoopError(0))
         
-
-
-
         self.front_lift.set(ctre.WPI_TalonSRX.ControlMode.Position, self.lift_target)
+
+        #Must be run after setting target
+        if self.front_lift.getClosedLoopError(0) < 200:
+            print('setting hold pid')
+            self.setMotorPids(self.front_lift,1,0,0,0)
+            if self.lift_target <= self.front_lift_heights[1]:
+                self.front_lift.set(0)
+            
 
         if self.joystick.getRawButton(2):
             self.back_lift.set(1)
@@ -406,8 +406,12 @@ class MyRobot(wpilib.TimedRobot):
             else:
                 self.arm_pid.setSetpoint(self.open_state)
         
-        self.back_lift_wheel.set(-self.joystick.getRawAxis(self.R_TRIGGER))
-
+        if self.joystick.getPOV(0) == 0:
+            self.back_lift_wheel.set(-1)
+        elif self.joystick.getPOV(0) == 180 :
+            self.back_lift_wheel.set(1)
+        else:
+            self.back_lift_wheel.set(0)
 
         self.prev_button1 = button1
         

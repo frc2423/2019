@@ -1,0 +1,37 @@
+[NetworkTables Storage 3.0]
+double "/Servo/ArmDown"=0.0
+double "/Servo/ArmUp"=0.0
+double "/Servo/Offset1"=0.0
+double "/Servo/Offset2"=0.0
+double "/Servo/Value"=0.5
+double "/encoder/continuous_current_limit"=0.0
+double "/encoder/peak_current_limit"=0.0
+double "/encoders/displacement_multiplier"=1.0
+double "/encoders/elevator_d"=0.0
+double "/encoders/elevator_f"=0.0
+double "/encoders/elevator_i"=0.0
+double "/encoders/elevator_p"=0.0
+boolean "/encoders/lift_limits"=false
+double "/encoders/position_d"=0.0
+double "/encoders/position_f"=0.7
+double "/encoders/position_i"=0.0
+double "/encoders/position_p"=0.5
+double "/encoders/talon_ramp"=0.0
+double "/encoders/ticks_per_rev"=1440.0
+double "/encoders/wheel_diameter"=6.0
+double "/gyro/max_turn_rate"=120.0
+double "/gyro/pause_time"=1.0
+double "/gyro/pid_input_range"=180.0
+double "/gyro/pid_output_range"=1.0
+double "/gyro/turn_rate_d"=0.0
+double "/gyro/turn_rate_i"=0.0
+double "/gyro/turn_rate_p"=0.0
+double "/lifts/arm_speed_down"=0.3
+double "/lifts/arm_speed_up"=1.0
+double "/lifts/back_lift_speed_down"=0.3
+double "/lifts/back_lift_speed_up"=1.0
+double "/lifts/front_bottom"=0.0
+double "/lifts/front_lift_speed_down"=0.3
+double "/lifts/front_lift_speed_up"=1.0
+double "/lifts/front_raised_max"=1000.0
+
