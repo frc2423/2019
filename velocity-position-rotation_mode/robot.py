@@ -111,7 +111,7 @@ class MyRobot(wpilib.TimedRobot):
     max_turn_rate = ntproperty("/gyro/max_turn_rate", 120, persistent = True)
 
     front_lift_heights = [0, 9700, 21500, 31500]#ntproperty("/lifts/front_lift_heights", [1,2,3,4,5,6], persistent=True)
-    front_lift_heights_index = 0
+    front_lift_heights_index = ntproperty("/lifts/front_lift_heights_index", 0, persistent=True)
     def front_lift_increment(self):
         if self.front_lift_heights_index < (len(self.front_lift_heights) - 1):
             self.front_lift_heights_index += 1
