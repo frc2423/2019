@@ -360,12 +360,12 @@ class MyRobot(wpilib.TimedRobot):
             self.button = True
             self.front_lift_increment()
             self.setMotorPids(self.front_lift, 1, 0, 0, 0)
-            self.lift_target = self.front_lift_heights[self.front_lift_heights_index]
+            self.lift_target = self.front_lift_heights[int(self.front_lift_heights_index)]
         elif self.joystick.getRawButton(5) and self.button == False:
             self.front_lift_decrement()
             self.button = True
             self.setMotorPids(self.front_lift, .01, 0, 0, 0)
-            self.lift_target = self.front_lift_heights[self.front_lift_heights_index]
+            self.lift_target = self.front_lift_heights[int(self.front_lift_heights_index)]
         elif ((self.joystick.getRawButton(6)) or (self.joystick.getRawButton(5))) and self.button == True:
             pass
         else:
