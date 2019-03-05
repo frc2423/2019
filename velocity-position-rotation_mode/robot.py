@@ -110,8 +110,22 @@ class MyRobot(wpilib.TimedRobot):
 
     max_turn_rate = ntproperty("/gyro/max_turn_rate", 120, persistent = True)
 
-    front_lift_heights = [0, 9700, 21500, 31500]#ntproperty("/lifts/front_lift_heights", [1,2,3,4,5,6], persistent=True)
-    front_lift_heights_index = ntproperty("/lifts/front_lift_heights_index", 0, persistent=True)
+    #front_lift_heights = [0, 9700, 21500, 31500]#ntproperty("/lifts/front_lift_heights", [1,2,3,4,5,6], persistent=True)
+
+    front_lift_heights = {
+        "zero": 0,
+        "cargo-hatch": 0,
+        "cargo-ball": 0,
+        "bot-hatch": 0,
+        "bot-ball": 9700,
+        "mid-hatch": 0,
+        "mid-ball": 21500,
+        "top-hatch": 0,
+        "top-ball": 31500,
+    }
+
+    front_lift_heights_index = ntproperty("/lifts/front_lift_heights_index", 'zero', persistent=True)
+
     def front_lift_increment(self):
         if self.front_lift_heights_index < (len(self.front_lift_heights) - 1):
             self.front_lift_heights_index += 1
@@ -314,9 +328,11 @@ class MyRobot(wpilib.TimedRobot):
 
         self.button = False
 
+        self.prev_front_lift_index = self.front_lift_heights_index
+
         self.lift_target = 0
 
-        self.front_lift_heights_index = 0
+        self.front_lift_heights_index = 'zero'
 
 
         self.front_lift.setQuadraturePosition(0, 0)
@@ -355,22 +371,38 @@ class MyRobot(wpilib.TimedRobot):
         #print ('Pitch', self.navx.getPitch())
         
         lift_speed = 45
-        
-        if self.joystick.getRawButton(6) and self.button == False:
+
+        #Old height increment
+        # if self.joystick.getRawButton(6) and self.button == False:
+        #     self.button = True
+        #     self.front_lift_increment()
+        #     self.setMotorPids(self.front_lift, 1, 0, 0, 0)
+        #     self.lift_target = self.front_lift_heights[self.front_lift_heights_index]
+        # elif self.joystick.getRawButton(5) and self.button == False:
+        #     self.front_lift_decrement()
+        #     self.button = True
+        #     self.setMotorPids(self.front_lift, .01, 0, 0, 0)
+        #     self.lift_target = self.front_lift_heights[self.front_lift_heights_index]
+        # elif ((self.joystick.getRawButton(6)) or (self.joystick.getRawButton(5))) and self.button == True:
+        #     pass
+        # else:
+        #     self.button = False
+
+        #Chomp button, brings lift to zero
+        if self.joystick.getRawButton(5) and self.button == False:
+            self.front_lift_heights_index = 'zero'
             self.button = True
-            self.front_lift_increment()
-            self.setMotorPids(self.front_lift, 1, 0, 0, 0)
-            self.lift_target = self.front_lift_heights[self.front_lift_heights_index]
-        elif self.joystick.getRawButton(5) and self.button == False:
-            self.front_lift_decrement()
-            self.button = True
-            self.setMotorPids(self.front_lift, .01, 0, 0, 0)
-            self.lift_target = self.front_lift_heights[self.front_lift_heights_index]
-        elif ((self.joystick.getRawButton(6)) or (self.joystick.getRawButton(5))) and self.button == True:
+        elif self.joystick.getRawButton(5):
             pass
         else:
             self.button = False
 
+        #setting lift target
+        if self.front_lift_heights_index != self.prev_front_lift_index:
+            self.lift_target = self.front_lift_heights[self.front_lift_heights_index]
+            self.prev_front_lift_index = self.front_lift_heights_index
+
+        #manual elevator control
         if self.deadzone(self.joystick.getRawAxis(self.R_TRIGGER)) > 0:
             if self.lift_target < 31500:
                 self.lift_target += (lift_speed * self.joystick.getRawAxis(self.R_TRIGGER))
@@ -382,13 +414,19 @@ class MyRobot(wpilib.TimedRobot):
         
         self.front_lift.set(ctre.WPI_TalonSRX.ControlMode.Position, self.lift_target)
 
-        #Must be run after setting target
+        #Must be run after setting target, sets pids
         if self.front_lift.getClosedLoopError(0) < 200:
             print('setting hold pid')
-            self.setMotorPids(self.front_lift,1,0,0,0)
-            if self.lift_target <= self.front_lift_heights[1]:
+            self.setMotorPids(self.front_lift, 1, 0, 0, 0)
+            #turns off motor entirely at low heights where it can hold itself up
+            if self.lift_target <= self.front_lift_heights['bot-ball']:
                 self.front_lift.set(0)
-            
+        else:
+            #sets weaker pids when moving downwards and stronger ones when moving upwards
+            if self.lift_target < self.front_lift.getQuadraturePosition():
+                self.setMotorPids(self.front_lift, .01, 0, 0, 0)
+            else:
+                self.setMotorPids(self.front_lift, 1, 0, 0, 0)
 
         if self.joystick.getRawButton(2):
             self.back_lift.set(1)
