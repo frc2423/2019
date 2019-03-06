@@ -31,7 +31,7 @@ class MyRobot(wpilib.TimedRobot):
         self.arm_pid = wpilib.PIDController(3,0,0, self.arm_pot.get, self.pid_output)
 
     def pid_output(self, output):
-        print('output:', output)
+        #print('output:', output)
         self.arm.set(output)
 
     def autonomousInit(self):
