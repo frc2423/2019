@@ -62,6 +62,9 @@ class MyRobot(wpilib.TimedRobot):
     arm_speed_down = ntproperty('/lifts/arm_speed_down', .3, persistent=True)
     front_raised_max = ntproperty('/lifts/front_raised_max', 1000, persistent=True)
     front_bottom = ntproperty('/lifts/front_bottom', 0, persistent=True)
+    lift_divider = ntproperty('/lifts/lift_divider', 10, persistent=True)
+    lift_speed_up = ntproperty('/lifts/lift_speed_up', 1, persistent=True)
+    lift_speed_down = ntproperty('/lifts/lift_speed_down', .3, persistent=True)
 
     talon_ramp = ntproperty('/encoders/talon_ramp', 0, persistent = True)
     continuous_current_limit = ntproperty('/encoder/continuous_current_limit', 0, persistent = True)
@@ -211,7 +214,8 @@ class MyRobot(wpilib.TimedRobot):
             'position': Position_Mode(self),
             'enter_rotation': Enter_Rotation_Mode(self),
             'rotation': Rotation_Mode(self),
-            'leave_special': Leave_Special_Mode(self)
+            'leave_special': Leave_Special_Mode(self),
+            'lift_robot': Lift_Robot(self)
         }
         self.drive_sm = State_Machine(self.driveStates, "Drive_sm")
         self.drive_sm.set_state('velocity')
@@ -370,13 +374,13 @@ class MyRobot(wpilib.TimedRobot):
             pass
         else:
             self.button = False
-
-        if self.deadzone(self.joystick.getRawAxis(self.R_TRIGGER)) > 0:
-            if self.lift_target < 31500:
-                self.lift_target += (lift_speed * self.joystick.getRawAxis(self.R_TRIGGER))
-        elif self.deadzone(self.joystick.getRawAxis(self.L_TRIGGER)) > 0:
-            if self.lift_target > -1000:
-                self.lift_target -= (lift_speed * self.joystick.getRawAxis(self.L_TRIGGER))
+        if not self.joystick.getRawButton(self.BUTTON_X):
+            if self.deadzone(self.joystick.getRawAxis(self.R_TRIGGER)) > 0:
+                if self.lift_target < 31500:
+                    self.lift_target += (lift_speed * self.joystick.getRawAxis(self.R_TRIGGER))
+            elif self.deadzone(self.joystick.getRawAxis(self.L_TRIGGER)) > 0:
+                if self.lift_target > -1000:
+                    self.lift_target -= (lift_speed * self.joystick.getRawAxis(self.L_TRIGGER))
         
         #print(self.front_lift.getClosedLoopError(0))
         
