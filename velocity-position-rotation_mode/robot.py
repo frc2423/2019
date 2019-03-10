@@ -114,7 +114,7 @@ class MyRobot(wpilib.TimedRobot):
 
     max_turn_rate = ntproperty("/gyro/max_turn_rate", 120, persistent = True)
 
-    front_lift_heights = [0, 9700, 21500, 31500]#ntproperty("/lifts/front_lift_heights", [1,2,3,4,5,6], persistent=True)
+    front_lift_heights = [0, 6800, 6800, 9700, 15792, 18529, 21500, 29500, 31500]#ntproperty("/lifts/front_lift_heights", [1,2,3,4,5,6], persistent=True)
     front_lift_heights_index = ntproperty("/lifts/front_lift_heights_index", 0, persistent=True)
     def front_lift_increment(self):
         if self.front_lift_heights_index < (len(self.front_lift_heights) - 1):
@@ -177,7 +177,7 @@ class MyRobot(wpilib.TimedRobot):
         self.fl_motor.setSensorPhase(True)
         #self.fr_motor.setSensorPhase(True)
         self.br_motor.setSensorPhase(True)
-        self.front_lift.setSensorPhase(False)
+        self.front_lift.setSensorPhase(True)
 
         self.deadzone_amount = 0.15
 
@@ -322,6 +322,7 @@ class MyRobot(wpilib.TimedRobot):
 
         self.front_lift_heights_index = 0
 
+        self.lift_target = 0
 
         self.front_lift.setQuadraturePosition(0, 0)
         self.fr_motor.setQuadraturePosition(0, 0)
@@ -357,36 +358,39 @@ class MyRobot(wpilib.TimedRobot):
         # print(f"FL: {self.fl_motor.getQuadraturePosition()}    FR: {self.fr_motor.getQuadraturePosition()}    BL: {self.bl_motor.getQuadraturePosition()}    BR: {self.br_motor.getQuadraturePosition()}")
         #print(f'p: {self.velocity_p}   i: {self.velocity_i}   d:{self.velocity_d}   f: {self.velocity_f}')
         #print ('Pitch', self.navx.getPitch())
+        lift_speed = 45
 
-        
+        # if the right bumper is pressed
         if self.joystick.getRawButton(6) and self.button == False:
             self.button = True
             self.front_lift_increment()
             self.setMotorPids(self.front_lift, 1, 0, 0, 0)
+            self.lift_target = self.front_lift_heights[int(self.front_lift_heights_index)]
+            # if the left bumper is pressed
         elif self.joystick.getRawButton(5) and self.button == False:
             self.front_lift_decrement()
             self.button = True
-            self.setMotorPids(self.front_lift, .01, 0, 0, 0)
+            self.setMotorPids(self.front_lift, .2, 0, 0, 0)
+            self.lift_target = self.front_lift_heights[int(self.front_lift_heights_index)]
+        # If neither bumper is pressed
         elif ((self.joystick.getRawButton(6)) or (self.joystick.getRawButton(5))) and self.button == True:
             pass
         else:
             self.button = False
-        if not self.joystick.getRawButton(self.BUTTON_X):
-            if self.deadzone(self.joystick.getRawAxis(self.L_TRIGGER)) > 0:
-                self.front_lift.set(self.front_lift_speed_up * self.deadzone(self.joystick.getRawAxis(self.L_TRIGGER)))
-            elif self.deadzone(self.joystick.getRawAxis(self.R_TRIGGER)) > 0:
-                self.front_lift.set(
-                    self.front_lift_speed_down * -self.deadzone(self.joystick.getRawAxis(self.R_TRIGGER)))
-            else:
-                self.front_lift.set(0)
+
+        if self.deadzone(self.joystick.getRawAxis(self.R_TRIGGER)) > 0:
+            if self.lift_target < 31500:
+                self.lift_target += (lift_speed * self.joystick.getRawAxis(self.R_TRIGGER))
+        elif self.deadzone(self.joystick.getRawAxis(self.L_TRIGGER)) > 0:
+            if self.lift_target > -1000:
+                self.lift_target -= (lift_speed * self.joystick.getRawAxis(self.L_TRIGGER))
+
+        print('lift target:  ',self.lift_target,'      lift encoder:', self.front_lift.getQuadraturePosition())
+
+        self.front_lift.set(ctre.WPI_TalonSRX.ControlMode.Position, self.lift_target)
             
 
-        if self.joystick.getRawButton(2):
-            self.back_lift.set(1)
-        elif self.joystick.getRawButton(3):
-            self.back_lift.set(-1)
-        else:
-            self.back_lift.set(0)
+
 
          # button 1 toggles pid_position
         button1 = self.joystick.getRawButton(1)
