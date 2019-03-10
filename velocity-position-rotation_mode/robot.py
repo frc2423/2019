@@ -17,6 +17,7 @@ sys.path.append("..")
 from drive_modes.position import Enter_Position_Mode,Position_Mode
 from drive_modes.rotation import Enter_Rotation_Mode,Rotation_Mode
 from drive_modes.velocity import Leave_Special_Mode,Velocty_Mode
+from drive_modes.Lift_Robot import Lift_Robot
 from lift_modes import Fully_Raised, Middle, Fully_Lowered, Go_To_Height
 
 class RelativeGyro:
@@ -94,7 +95,7 @@ class MyRobot(wpilib.TimedRobot):
     ticks_per_rev_br = 12000 #ntproperty('/encoders/ticks_per_rev_br', 8630, persistent = True) # done
 
     def setMotorPids(self, motor, p, i, d, f):
-        print("setting encoder PIDs")
+        #print("setting encoder PIDs")
         motor.config_kP(0, p, MyRobot.TIMEOUT_MS)
         motor.config_kI(0, i, MyRobot.TIMEOUT_MS)
         motor.config_kD(0, d, MyRobot.TIMEOUT_MS)
@@ -156,6 +157,8 @@ class MyRobot(wpilib.TimedRobot):
 
         self.arm = ctre.wpi_talonsrx.WPI_TalonSRX(0)
         self.front_lift = ctre.wpi_talonsrx.WPI_TalonSRX(6)
+        self.front_lift_slave = ctre.wpi_talonsrx.WPI_TalonSRX(50)
+        self.front_lift_slave.follow(self.front_lift)
         self.back_lift = ctre.wpi_talonsrx.WPI_TalonSRX(2)
         self.back_lift_wheel = ctre.wpi_talonsrx.WPI_TalonSRX(1)
 
@@ -174,7 +177,7 @@ class MyRobot(wpilib.TimedRobot):
         self.fl_motor.setSensorPhase(True)
         #self.fr_motor.setSensorPhase(True)
         self.br_motor.setSensorPhase(True)
-        self.front_lift.setSensorPhase(True)
+        self.front_lift.setSensorPhase(False)
 
         self.deadzone_amount = 0.15
 
@@ -268,7 +271,6 @@ class MyRobot(wpilib.TimedRobot):
             return angle
 
     def entry_listener(self, key, value, is_new):
-
         try:
             if key == '/gyro/turn_rate_p':
                 self.angle_pid.setP(self.turn_rate_p)
@@ -318,8 +320,6 @@ class MyRobot(wpilib.TimedRobot):
 
         self.button = False
 
-        self.lift_target = 0
-
         self.front_lift_heights_index = 0
 
 
@@ -357,40 +357,27 @@ class MyRobot(wpilib.TimedRobot):
         # print(f"FL: {self.fl_motor.getQuadraturePosition()}    FR: {self.fr_motor.getQuadraturePosition()}    BL: {self.bl_motor.getQuadraturePosition()}    BR: {self.br_motor.getQuadraturePosition()}")
         #print(f'p: {self.velocity_p}   i: {self.velocity_i}   d:{self.velocity_d}   f: {self.velocity_f}')
         #print ('Pitch', self.navx.getPitch())
-        
-        lift_speed = 45
+
         
         if self.joystick.getRawButton(6) and self.button == False:
             self.button = True
             self.front_lift_increment()
             self.setMotorPids(self.front_lift, 1, 0, 0, 0)
-            self.lift_target = self.front_lift_heights[int(self.front_lift_heights_index)]
         elif self.joystick.getRawButton(5) and self.button == False:
             self.front_lift_decrement()
             self.button = True
             self.setMotorPids(self.front_lift, .01, 0, 0, 0)
-            self.lift_target = self.front_lift_heights[int(self.front_lift_heights_index)]
         elif ((self.joystick.getRawButton(6)) or (self.joystick.getRawButton(5))) and self.button == True:
             pass
         else:
             self.button = False
         if not self.joystick.getRawButton(self.BUTTON_X):
-            if self.deadzone(self.joystick.getRawAxis(self.R_TRIGGER)) > 0:
-                if self.lift_target < 31500:
-                    self.lift_target += (lift_speed * self.joystick.getRawAxis(self.R_TRIGGER))
-            elif self.deadzone(self.joystick.getRawAxis(self.L_TRIGGER)) > 0:
-                if self.lift_target > -1000:
-                    self.lift_target -= (lift_speed * self.joystick.getRawAxis(self.L_TRIGGER))
-        
-        #print(self.front_lift.getClosedLoopError(0))
-        
-        self.front_lift.set(ctre.WPI_TalonSRX.ControlMode.Position, self.lift_target)
-
-        #Must be run after setting target
-        if self.front_lift.getClosedLoopError(0) < 200:
-            print('setting hold pid')
-            self.setMotorPids(self.front_lift,1,0,0,0)
-            if self.lift_target <= self.front_lift_heights[1]:
+            if self.deadzone(self.joystick.getRawAxis(self.L_TRIGGER)) > 0:
+                self.front_lift.set(self.front_lift_speed_up * self.deadzone(self.joystick.getRawAxis(self.L_TRIGGER)))
+            elif self.deadzone(self.joystick.getRawAxis(self.R_TRIGGER)) > 0:
+                self.front_lift.set(
+                    self.front_lift_speed_down * -self.deadzone(self.joystick.getRawAxis(self.R_TRIGGER)))
+            else:
                 self.front_lift.set(0)
             
 
