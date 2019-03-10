@@ -1,0 +1,101 @@
+diff --git a/velocity-position-rotation_mode/drive_modes/Lift_Robot.py b/velocity-position-rotation_mode/drive_modes/Lift_Robot.py
+new file mode 100644
+index 0000000..ab31bcd
+--- /dev/null
++++ b/velocity-position-rotation_mode/drive_modes/Lift_Robot.py
+@@ -0,0 +1,15 @@
++class Lift_Robot:
++  def __init__(self, robot):
++        self.robot = robot
++  def run(self):
++    lift_power = -self.robot.navx.getPitch() / self.robot.lift_divider
++    if lift_power < 0:
++      lift_power = lift_power * self.robot.lift_speed_up
++    else:
++      lift_power = lift_power * self.robot.lift_speed_down
++    print(f"lift power: {lift_power}")
++    self.robot.front_lift.set(lift_power)
++
++    if self.robot.joystick.getRawButton(self.robot.BUTTON_X):
++      return 'lift_robot'
++    return 'velocity'
+diff --git a/velocity-position-rotation_mode/drive_modes/velocity.py b/velocity-position-rotation_mode/drive_modes/velocity.py
+index 5347bfe..e4e7704 100644
+--- a/velocity-position-rotation_mode/drive_modes/velocity.py
++++ b/velocity-position-rotation_mode/drive_modes/velocity.py
+@@ -63,5 +63,7 @@ class Velocty_Mode:
+             return 'enter_rotation'
+         elif self.robot.joystick.getRawButton(self.robot.BUTTON_RBUMPER):
+             return 'enter_position'
++        elif self.robot.joystick.getRawButton(self.robot.BUTTON_X):
++            return 'lift_robot'
+ 
+         return 'velocity'
+\ No newline at end of file
+diff --git a/velocity-position-rotation_mode/robot.py b/velocity-position-rotation_mode/robot.py
+index 11af84d..761525b 100644
+--- a/velocity-position-rotation_mode/robot.py
++++ b/velocity-position-rotation_mode/robot.py
+@@ -17,6 +17,7 @@ sys.path.append("..")
+ from drive_modes.position import Enter_Position_Mode,Position_Mode
+ from drive_modes.rotation import Enter_Rotation_Mode,Rotation_Mode
+ from drive_modes.velocity import Leave_Special_Mode,Velocty_Mode
++from drive_modes.Lift_Robot import Lift_Robot
+ from lift_modes import Fully_Raised, Middle, Fully_Lowered, Go_To_Height
+ 
+ class RelativeGyro:
+@@ -62,6 +63,9 @@ class MyRobot(wpilib.TimedRobot):
+     arm_speed_down = ntproperty('/lifts/arm_speed_down', .3, persistent=True)
+     front_raised_max = ntproperty('/lifts/front_raised_max', 1000, persistent=True)
+     front_bottom = ntproperty('/lifts/front_bottom', 0, persistent=True)
++    lift_divider = ntproperty('/lifts/lift_divider', 10, persistent=True)
++    lift_speed_up = ntproperty('/lifts/lift_speed_up', 1, persistent=True)
++    lift_speed_down = ntproperty('/lifts/lift_speed_down', .3, persistent=True)
+ 
+     talon_ramp = ntproperty('/encoders/talon_ramp', 0, persistent = True)
+     continuous_current_limit = ntproperty('/encoder/continuous_current_limit', 0, persistent = True)
+@@ -217,7 +221,8 @@ class MyRobot(wpilib.TimedRobot):
+             'position': Position_Mode(self),
+             'enter_rotation': Enter_Rotation_Mode(self),
+             'rotation': Rotation_Mode(self),
+-            'leave_special': Leave_Special_Mode(self)
++            'leave_special': Leave_Special_Mode(self),
++            'lift_robot': Lift_Robot(self)
+         }
+         self.drive_sm = State_Machine(self.driveStates, "Drive_sm")
+         self.drive_sm.set_state('velocity')
+@@ -352,11 +357,13 @@ class MyRobot(wpilib.TimedRobot):
+ 
+     def teleopPeriodic(self):
+         self.drive_sm.run()
++
++        
+         #self.lift_sm.run()
+         #print("elevator pid: ", self.get_lift_position(), "lift state: ", self.lift_sm.get_state(), "   target position: ",self.front_lift_heights[self.front_lift_heights_index])
+         # print(f"FL: {self.fl_motor.getQuadraturePosition()}    FR: {self.fr_motor.getQuadraturePosition()}    BL: {self.bl_motor.getQuadraturePosition()}    BR: {self.br_motor.getQuadraturePosition()}")
+         #print(f'p: {self.velocity_p}   i: {self.velocity_i}   d:{self.velocity_d}   f: {self.velocity_f}')
+-        #print ('Pitch', self.navx.getPitch())
++        # print ('Pitch', self.navx.getPitch())
+         
+         if self.joystick.getRawButton(6) and self.button == False:
+             self.button = True
+@@ -371,12 +378,13 @@ class MyRobot(wpilib.TimedRobot):
+         else:
+             self.button = False
+ 
+-        if self.deadzone(self.joystick.getRawAxis(self.L_TRIGGER)) > 0:
+-            self.front_lift.set(self.front_lift_speed_up * self.deadzone(self.joystick.getRawAxis(self.L_TRIGGER)))
+-        elif self.deadzone(self.joystick.getRawAxis(self.R_TRIGGER)) > 0:
+-            self.front_lift.set(self.front_lift_speed_down * -self.deadzone(self.joystick.getRawAxis(self.R_TRIGGER)))
+-        else:
+-            self.front_lift.set(0)
++        if not self.joystick.getRawButton(self.BUTTON_X):
++            if self.deadzone(self.joystick.getRawAxis(self.L_TRIGGER)) > 0:
++                self.front_lift.set(self.front_lift_speed_up * self.deadzone(self.joystick.getRawAxis(self.L_TRIGGER)))
++            elif self.deadzone(self.joystick.getRawAxis(self.R_TRIGGER)) > 0:
++                self.front_lift.set(self.front_lift_speed_down * -self.deadzone(self.joystick.getRawAxis(self.R_TRIGGER)))
++            else:
++                self.front_lift.set(0)
+ 
+         #print(self.front_lift.getClosedLoopError(0))
+ 
