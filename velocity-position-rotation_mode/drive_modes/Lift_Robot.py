@@ -4,28 +4,41 @@ class Lift_Robot:
       self.robot = robot
 
   def run(self):
+      #setting lift power
+      lift_power = -self.robot.navx.getPitch() / self.robot.lift_divider
+
+      #when up (b) button is pressed
       if self.robot.joystick.getRawButton(2):
-          self.robot.back_lift.set(self.robot.back_lift_speed_up)
-          lift_power = -self.robot.navx.getPitch() / self.robot.lift_divider
+          #setting back lift
+          self.robot.front_lift.set(self.robot.front_lift_speed_up)
+
+          #setting front lift
           if lift_power < 0:
               lift_power = lift_power * self.robot.lift_speed_up
           else:
               lift_power = lift_power * self.robot.lift_speed_down
           print(f"lift power: {lift_power}")
-          self.robot.front_lift.set(lift_power)
+          self.robot.back_lift.set(lift_power)
+
+      #when down (y) button is pressed
       elif self.robot.joystick.getRawButton(4):
-          self.robot.back_lift.set(self.robot.back_lift_speed_down)
-          lift_power = -self.robot.navx.getPitch() / self.robot.lift_divider
+          #setting back lift
+          self.robot.front_lift.set(self.robot.front_lift_speed_down)
+
+          #setting front lift
           if lift_power < 0:
               lift_power = lift_power * self.robot.lift_speed_up
           else:
               lift_power = lift_power * self.robot.lift_speed_down
           print(f"lift power: {lift_power}")
-          self.robot.front_lift.set(lift_power)
+          self.robot.back_lift.set(lift_power)
+
       else:
+          # if nothing is pressed
           self.robot.back_lift.set(0)
           self.robot.front_lift.set(0)
 
+      #transition code
       if self.robot.joystick.getRawButton(self.robot.BUTTON_X):
           return 'lift_robot'
       return 'velocity'
