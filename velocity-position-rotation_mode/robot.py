@@ -17,6 +17,7 @@ sys.path.append("..")
 from drive_modes.position import Enter_Position_Mode,Position_Mode
 from drive_modes.rotation import Enter_Rotation_Mode,Rotation_Mode
 from drive_modes.velocity import Leave_Special_Mode,Velocty_Mode
+from drive_modes.Lift_Robot import Lift_Robot
 from lift_modes import Fully_Raised, Middle, Fully_Lowered, Go_To_Height
 
 class RelativeGyro:
@@ -62,6 +63,9 @@ class MyRobot(wpilib.TimedRobot):
     arm_speed_down = ntproperty('/lifts/arm_speed_down', .3, persistent=True)
     front_raised_max = ntproperty('/lifts/front_raised_max', 1000, persistent=True)
     front_bottom = ntproperty('/lifts/front_bottom', 0, persistent=True)
+    lift_divider = ntproperty('/lifts/lift_divider', 10, persistent=True)
+    lift_speed_up = ntproperty('/lifts/lift_speed_up', 1, persistent=True)
+    lift_speed_down = ntproperty('/lifts/lift_speed_down', .3, persistent=True)
 
     talon_ramp = ntproperty('/encoders/talon_ramp', 0, persistent = True)
     continuous_current_limit = ntproperty('/encoder/continuous_current_limit', 0, persistent = True)
@@ -91,7 +95,7 @@ class MyRobot(wpilib.TimedRobot):
     ticks_per_rev_br = 12000 #ntproperty('/encoders/ticks_per_rev_br', 8630, persistent = True) # done
 
     def setMotorPids(self, motor, p, i, d, f):
-        print("setting encoder PIDs")
+        #print("setting encoder PIDs")
         motor.config_kP(0, p, MyRobot.TIMEOUT_MS)
         motor.config_kI(0, i, MyRobot.TIMEOUT_MS)
         motor.config_kD(0, d, MyRobot.TIMEOUT_MS)
@@ -110,10 +114,14 @@ class MyRobot(wpilib.TimedRobot):
 
     max_turn_rate = ntproperty("/gyro/max_turn_rate", 120, persistent = True)
 
+<<<<<<< HEAD
     front_lift_heights = [0, 9700, 21500, 31500]#ntproperty("/lifts/front_lift_heights", [1,2,3,4,5,6], persistent=True)
     front_lift_heights_names = ntproperty("/lifts/front_lift_height_names", ['zero', 'bot-ball', 'mid-ball', 'top-ball'], persistent=True)
 
     front_lift_heights_index_name = ntproperty("/lifts/front_lift_heights_index_name", 'zero', persistent=True)
+=======
+    front_lift_heights = [0, 6800, 6800, 9700, 15792, 18529, 21500, 29500, 31500]#ntproperty("/lifts/front_lift_heights", [1,2,3,4,5,6], persistent=True)
+>>>>>>> ab1e87563768e9cc1ab803b080c2119ae8874343
     front_lift_heights_index = ntproperty("/lifts/front_lift_heights_index", 0, persistent=True)
 
     climb_toggle = ntproperty('/lifts/climb_toggle', False, persistent=True)
@@ -161,6 +169,8 @@ class MyRobot(wpilib.TimedRobot):
 
         self.arm = ctre.wpi_talonsrx.WPI_TalonSRX(0)
         self.front_lift = ctre.wpi_talonsrx.WPI_TalonSRX(6)
+        self.front_lift_slave = ctre.wpi_talonsrx.WPI_TalonSRX(50)
+        self.front_lift_slave.follow(self.front_lift)
         self.back_lift = ctre.wpi_talonsrx.WPI_TalonSRX(2)
         self.back_lift_wheel = ctre.wpi_talonsrx.WPI_TalonSRX(1)
 
@@ -219,7 +229,8 @@ class MyRobot(wpilib.TimedRobot):
             'position': Position_Mode(self),
             'enter_rotation': Enter_Rotation_Mode(self),
             'rotation': Rotation_Mode(self),
-            'leave_special': Leave_Special_Mode(self)
+            'leave_special': Leave_Special_Mode(self),
+            'lift_robot': Lift_Robot(self)
         }
         self.drive_sm = State_Machine(self.driveStates, "Drive_sm")
         self.drive_sm.set_state('velocity')
@@ -272,7 +283,6 @@ class MyRobot(wpilib.TimedRobot):
             return angle
 
     def entry_listener(self, key, value, is_new):
-
         try:
             if key == '/gyro/turn_rate_p':
                 self.angle_pid.setP(self.turn_rate_p)
@@ -322,10 +332,9 @@ class MyRobot(wpilib.TimedRobot):
 
         self.button = False
 
-        self.lift_target = 0
-
         self.front_lift_heights_index = 0
 
+        self.lift_target = 0
 
         self.front_lift.setQuadraturePosition(0, 0)
         self.fr_motor.setQuadraturePosition(0, 0)
@@ -361,21 +370,27 @@ class MyRobot(wpilib.TimedRobot):
         # print(f"FL: {self.fl_motor.getQuadraturePosition()}    FR: {self.fr_motor.getQuadraturePosition()}    BL: {self.bl_motor.getQuadraturePosition()}    BR: {self.br_motor.getQuadraturePosition()}")
         #print(f'p: {self.velocity_p}   i: {self.velocity_i}   d:{self.velocity_d}   f: {self.velocity_f}')
         #print ('Pitch', self.navx.getPitch())
+<<<<<<< HEAD
         
         self.match_time = self.timer.getMatchTime()
 
+=======
+>>>>>>> ab1e87563768e9cc1ab803b080c2119ae8874343
         lift_speed = 45
-        
+
+        # if the right bumper is pressed
         if self.joystick.getRawButton(6) and self.button == False:
             self.button = True
             self.front_lift_increment()
             self.setMotorPids(self.front_lift, 1, 0, 0, 0)
             self.lift_target = self.front_lift_heights[int(self.front_lift_heights_index)]
+            # if the left bumper is pressed
         elif self.joystick.getRawButton(5) and self.button == False:
             self.front_lift_decrement()
             self.button = True
-            self.setMotorPids(self.front_lift, .01, 0, 0, 0)
+            self.setMotorPids(self.front_lift, .2, 0, 0, 0)
             self.lift_target = self.front_lift_heights[int(self.front_lift_heights_index)]
+        # If neither bumper is pressed
         elif ((self.joystick.getRawButton(6)) or (self.joystick.getRawButton(5))) and self.button == True:
             pass
         else:
@@ -387,25 +402,13 @@ class MyRobot(wpilib.TimedRobot):
         elif self.deadzone(self.joystick.getRawAxis(self.L_TRIGGER)) > 0:
             if self.lift_target > -1000:
                 self.lift_target -= (lift_speed * self.joystick.getRawAxis(self.L_TRIGGER))
-        
-        #print(self.front_lift.getClosedLoopError(0))
-        
-        self.front_lift.set(ctre.WPI_TalonSRX.ControlMode.Position, self.lift_target)
 
-        #Must be run after setting target
-        if self.front_lift.getClosedLoopError(0) < 200:
-            print('setting hold pid')
-            self.setMotorPids(self.front_lift,1,0,0,0)
-            if self.lift_target <= self.front_lift_heights[1]:
-                self.front_lift.set(0)
+        print('lift target:  ',self.lift_target,'      lift encoder:', self.front_lift.getQuadraturePosition())
+
+        self.front_lift.set(ctre.WPI_TalonSRX.ControlMode.Position, self.lift_target)
             
 
-        if self.joystick.getRawButton(2):
-            self.back_lift.set(1)
-        elif self.joystick.getRawButton(3):
-            self.back_lift.set(-1)
-        else:
-            self.back_lift.set(0)
+
 
          # button 1 toggles pid_position
         button1 = self.joystick.getRawButton(1)
