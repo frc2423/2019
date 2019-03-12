@@ -114,14 +114,7 @@ class MyRobot(wpilib.TimedRobot):
 
     max_turn_rate = ntproperty("/gyro/max_turn_rate", 120, persistent = True)
 
-<<<<<<< HEAD
-    front_lift_heights = [0, 9700, 21500, 31500]#ntproperty("/lifts/front_lift_heights", [1,2,3,4,5,6], persistent=True)
-    front_lift_heights_names = ntproperty("/lifts/front_lift_height_names", ['zero', 'bot-ball', 'mid-ball', 'top-ball'], persistent=True)
-
-    front_lift_heights_index_name = ntproperty("/lifts/front_lift_heights_index_name", 'zero', persistent=True)
-=======
     front_lift_heights = [0, 6800, 6800, 9700, 15792, 18529, 21500, 29500, 31500]#ntproperty("/lifts/front_lift_heights", [1,2,3,4,5,6], persistent=True)
->>>>>>> ab1e87563768e9cc1ab803b080c2119ae8874343
     front_lift_heights_index = ntproperty("/lifts/front_lift_heights_index", 0, persistent=True)
 
     climb_toggle = ntproperty('/lifts/climb_toggle', False, persistent=True)
@@ -370,12 +363,9 @@ class MyRobot(wpilib.TimedRobot):
         # print(f"FL: {self.fl_motor.getQuadraturePosition()}    FR: {self.fr_motor.getQuadraturePosition()}    BL: {self.bl_motor.getQuadraturePosition()}    BR: {self.br_motor.getQuadraturePosition()}")
         #print(f'p: {self.velocity_p}   i: {self.velocity_i}   d:{self.velocity_d}   f: {self.velocity_f}')
         #print ('Pitch', self.navx.getPitch())
-<<<<<<< HEAD
         
         self.match_time = self.timer.getMatchTime()
 
-=======
->>>>>>> ab1e87563768e9cc1ab803b080c2119ae8874343
         lift_speed = 45
 
         # if the right bumper is pressed

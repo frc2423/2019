@@ -63,7 +63,7 @@ class Velocty_Mode:
             return 'enter_rotation'
         elif self.robot.joystick.getRawButton(self.robot.BUTTON_RBUMPER):
             return 'enter_position'
-        elif self.robot.joystick.getRawButton(self.robot.BUTTON_X):
+        elif self.robot.climb_toggle:
             return 'lift_robot'
 
         return 'velocity'

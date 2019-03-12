@@ -39,6 +39,6 @@ class Lift_Robot:
           self.robot.front_lift.set(0)
 
       #transition code
-      if self.robot.joystick.getRawButton(self.robot.BUTTON_X):
+      if self.robot.climb_toggle:
           return 'lift_robot'
       return 'velocity'
