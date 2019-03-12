@@ -111,7 +111,15 @@ class MyRobot(wpilib.TimedRobot):
     max_turn_rate = ntproperty("/gyro/max_turn_rate", 120, persistent = True)
 
     front_lift_heights = [0, 9700, 21500, 31500]#ntproperty("/lifts/front_lift_heights", [1,2,3,4,5,6], persistent=True)
+    front_lift_heights_names = ntproperty("/lifts/front_lift_height_names", ['zero', 'bot-ball', 'mid-ball', 'top-ball'], persistent=True)
+
+    front_lift_heights_index_name = ntproperty("/lifts/front_lift_heights_index_name", 'zero', persistent=True)
     front_lift_heights_index = ntproperty("/lifts/front_lift_heights_index", 0, persistent=True)
+
+    climb_toggle = ntproperty('/lifts/climb_toggle', False, persistent=True)
+
+    match_time = ntproperty('/time/match-time', 0.0)
+
     def front_lift_increment(self):
         if self.front_lift_heights_index < (len(self.front_lift_heights) - 1):
             self.front_lift_heights_index += 1
@@ -354,6 +362,8 @@ class MyRobot(wpilib.TimedRobot):
         #print(f'p: {self.velocity_p}   i: {self.velocity_i}   d:{self.velocity_d}   f: {self.velocity_f}')
         #print ('Pitch', self.navx.getPitch())
         
+        self.match_time = self.timer.getMatchTime()
+
         lift_speed = 45
         
         if self.joystick.getRawButton(6) and self.button == False:
