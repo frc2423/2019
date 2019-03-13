@@ -114,6 +114,8 @@ class MyRobot(wpilib.TimedRobot):
 
     max_turn_rate = ntproperty("/gyro/max_turn_rate", 120, persistent = True)
 
+    lift_target = ntproperty("/lifts/lift_target", 0)
+
     front_lift_heights = [0, 6800, 6800, 9700, 15792, 18529, 21500, 29500, 31500]#ntproperty("/lifts/front_lift_heights", [1,2,3,4,5,6], persistent=True)
     front_lift_heights_index = ntproperty("/lifts/front_lift_heights_index", 0, persistent=True)
 
@@ -284,6 +286,9 @@ class MyRobot(wpilib.TimedRobot):
             elif key == '/gyro/turn_rate_d':
                 self.angle_pid.setD(self.turn_rate_d)
 
+            if key == '/lifts/front_lift_heights_index':
+                self.lift_target = self.front_lift_heights[int(self.front_lift_heights_index)]
+
             if "encoders" in key:
                 self.set_wheel_pids()
 
@@ -324,6 +329,8 @@ class MyRobot(wpilib.TimedRobot):
         self.prev_button1 = False
 
         self.button = False
+
+        self.button_chomp = False
 
         self.front_lift_heights_index = 0
 
@@ -368,6 +375,16 @@ class MyRobot(wpilib.TimedRobot):
 
         lift_speed = 45
 
+        #chomp_button
+        if self.joystick.getRawButton(4) and self.button == False:
+            self.front_lift_heights_index = 0
+            self.button_chomp = True
+         elif self.joystick.getRawButton(4):
+            pass
+        else:
+            self.button = False
+
+
         # if the right bumper is pressed
         if self.joystick.getRawButton(6) and self.button == False:
             self.button = True
@@ -397,7 +414,6 @@ class MyRobot(wpilib.TimedRobot):
 
         self.front_lift.set(ctre.WPI_TalonSRX.ControlMode.Position, self.lift_target)
             
-
 
 
          # button 1 toggles pid_position

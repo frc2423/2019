@@ -30,15 +30,9 @@ double "/lifts/arm_speed_down"=0.3
 double "/lifts/arm_speed_up"=1.0
 double "/lifts/back_lift_speed_down"=0.3
 double "/lifts/back_lift_speed_up"=1.0
-boolean "/lifts/climb_toggle"=false
+boolean "/lifts/climb_toggle"=true
 double "/lifts/front_bottom"=0.0
-<<<<<<< HEAD
-array string "/lifts/front_lift_height_names"="zero","bot-ball","mid-ball","top-ball"
-double "/lifts/front_lift_heights_index"=4.0
-string "/lifts/front_lift_heights_index_name"="cargo-hatch"
-=======
-double "/lifts/front_lift_heights_index"=0.0
->>>>>>> ab1e87563768e9cc1ab803b080c2119ae8874343
+double "/lifts/front_lift_heights_index"=8.0
 double "/lifts/front_lift_speed_down"=0.3
 double "/lifts/front_lift_speed_up"=1.0
 double "/lifts/front_raised_max"=1000.0
