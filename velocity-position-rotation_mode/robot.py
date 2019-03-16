@@ -66,6 +66,8 @@ class MyRobot(wpilib.TimedRobot):
     lift_divider = ntproperty('/lifts/lift_divider', 10, persistent=True)
     lift_speed_up = ntproperty('/lifts/lift_speed_up', 1, persistent=True)
     lift_speed_down = ntproperty('/lifts/lift_speed_down', .3, persistent=True)
+    holding_front_lift = ntproperty('/lifts/holding_front_lift', .3, persistent=True)
+    holding_back_lift = ntproperty('/lifts/holding_back_lift', .3, persistent=True)
 
     talon_ramp = ntproperty('/encoders/talon_ramp', 0, persistent = True)
     continuous_current_limit = ntproperty('/encoder/continuous_current_limit', 0, persistent = True)
@@ -387,7 +389,8 @@ class MyRobot(wpilib.TimedRobot):
 
         print('lift target:  ',self.lift_target,'      lift encoder:', self.front_lift.getQuadraturePosition())
 
-        self.front_lift.set(ctre.WPI_TalonSRX.ControlMode.Position, self.lift_target)
+        if not self.drive_sm.get_state() == 'lift_robot':
+            self.front_lift.set(ctre.WPI_TalonSRX.ControlMode.Position, self.lift_target)
             
 
 
