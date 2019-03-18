@@ -13,7 +13,8 @@ class Leave_Special_Mode:
     def run(self):
         self.robot.angle_pid.disable()
         self.robot.set_wheel_pids()
-
+        self.robot.back_lift.set(0)
+        #self.robot.front_lift_heights_index = 0
         if self.robot.deadzone(self.robot.joystick.getRawAxis(self.robot.LX_AXIS)) == 0 \
                 and self.robot.deadzone(self.robot.joystick.getRawAxis(self.robot.LY_AXIS)) == 0 \
                 and self.robot.deadzone(self.robot.joystick.getRawAxis(self.robot.RX_AXIS)) == 0 \
@@ -55,9 +56,76 @@ class Velocty_Mode:
             self.robot.bl_motor.set(bl)
             self.robot.fr_motor.set(fr)
             self.robot.br_motor.set(br)
+            
+            
+
+        lift_speed = 45
+
+        # chomp_button
+        if self.robot.joystick.getRawButton(4) and self.robot.button == False:
+            self.robot.front_lift_heights_index = 0
+            self.robot.button_chomp = True
+        elif self.robot.joystick.getRawButton(4):
+            pass
+        else:
+            self.robot.button = False
 
 
-        # print(f"Error:   FL: {self.robot.fl_motor.getClosedLoopError(0)}    BL: {self.robot.bl_motor.getClosedLoopError(0)}   FR: {self.robot.fr_motor.getClosedLoopError(0)}   BR: {self.robot.br_motor.getClosedLoopError(0)}")
+        # if the right bumper is pressed
+        if self.robot.joystick.getRawButton(6) and self.robot.button == False:
+            self.robot.button = True
+            self.robot.front_lift_increment()
+            self.robot.setMotorPids(self.robot.front_lift, 1, 0, 0, 0)
+            self.robot.lift_target = self.robot.front_lift_heights[int(self.robot.front_lift_heights_index)]
+            # if the left bumper is pressed
+        elif self.robot.joystick.getRawButton(5) and self.robot.button == False:
+            self.robot.front_lift_decrement()
+            self.robot.button = True
+            self.robot.setMotorPids(self.robot.front_lift, .2, 0, 0, 0)
+            self.robot.lift_target = self.robot.front_lift_heights[int(self.robot.front_lift_heights_index)]
+        # If neither bumper is pressed
+        elif ((self.robot.joystick.getRawButton(6)) or (self.robot.joystick.getRawButton(5))) and self.robot.button == True:
+            pass
+        else:
+            self.robot.button = False
+
+        if self.robot.deadzone(self.robot.joystick.getRawAxis(self.robot.R_TRIGGER)) > 0:
+            if self.robot.lift_target < 31500:
+                self.robot.lift_target += (lift_speed * self.robot.joystick.getRawAxis(self.robot.R_TRIGGER))
+        elif self.robot.deadzone(self.robot.joystick.getRawAxis(self.robot.L_TRIGGER)) > 0:
+            if self.robot.lift_target > -1000:
+                self.robot.lift_target -= (lift_speed * self.robot.joystick.getRawAxis(self.robot.L_TRIGGER))
+
+        #print('lift target:  ',self.robot.lift_target,'      lift encoder:', self.robot.front_lift.getQuadraturePosition())
+
+        self.robot.front_lift.set(ctre.WPI_TalonSRX.ControlMode.Position, self.robot.lift_target)
+            
+
+
+         # button 1 toggles pid_position
+        button1 = self.robot.joystick.getRawButton(1)
+        #print(self.robot.arm)
+        if button1 and not self.robot.prev_button1:
+            if (self.robot.arm_pid.getSetpoint() == self.robot.open_state):
+                self.robot.arm_pid.setSetpoint(self.robot.closed_state)
+            else:
+                self.robot.arm_pid.setSetpoint(self.robot.open_state)
+                
+        self.robot.prev_button1 = button1
+
+        #print('arm_pot: ', self.robot.arm_pot.get())
+
+        if self.robot.joystick.getPOV(0) == 0:
+            self.robot.back_lift_wheel.set(-1)
+        elif self.robot.joystick.getPOV(0) == 180 :
+            self.robot.back_lift_wheel.set(1)
+        else:
+            self.robot.back_lift_wheel.set(0)
+
+        # print(f"Error:   FL: {self.robot.robot.fl_motor.getClosedLoopError(0)}    BL: {self.robot.robot.bl_motor.getClosedLoopError(0)}   FR: {self.robot.robot.fr_motor.getClosedLoopError(0)}   BR: {self.robot.robot.br_motor.getClosedLoopError(0)}")
+
+        self.robot.back_lift.set(0)
+
 
         if self.robot.joystick.getRawButton(self.robot.BUTTON_LBUMPER):
             return 'enter_rotation'

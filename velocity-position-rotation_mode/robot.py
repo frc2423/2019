@@ -55,15 +55,15 @@ class MyRobot(wpilib.TimedRobot):
     elevator_d = ntproperty('/encoders/elevator_d', 0.0, persistent=True)
     elevator_f = ntproperty('/encoders/elevator_f', 0.0, persistent=True)
 
-    back_lift_speed_up = ntproperty('/lifts/back_lift_speed_up', 1, persistent=True)
-    back_lift_speed_down = ntproperty('/lifts/back_lift_speed_down', .3, persistent=True)
+    back_lift_speed_up = ntproperty('/lifts/back_lift_speed_up', .5, persistent=True)
+    back_lift_speed_down = ntproperty('/lifts/back_lift_speed_down', .7, persistent=True)
     front_lift_speed_up = ntproperty('/lifts/front_lift_speed_up', 1, persistent=True)
     front_lift_speed_down = ntproperty('/lifts/front_lift_speed_down', .3, persistent=True)
-    arm_speed_up = ntproperty('/lifts/arm_speed_up', 1, persistent=True)
-    arm_speed_down = ntproperty('/lifts/arm_speed_down', .3, persistent=True)
+    arm_speed_up = .5#ntproperty('/lifts/arm_speed_up', 1, persistent=True)
+    arm_speed_down = .1#ntproperty('/lifts/arm_speed_down', .3, persistent=True)/2
     front_raised_max = ntproperty('/lifts/front_raised_max', 1000, persistent=True)
     front_bottom = ntproperty('/lifts/front_bottom', 0, persistent=True)
-    lift_divider = ntproperty('/lifts/lift_divider', 10, persistent=True)
+    lift_divider = ntproperty('/lifts/lift_divider', 3, persistent=True)
     lift_speed_up = ntproperty('/lifts/lift_speed_up', 1, persistent=True)
     lift_speed_down = ntproperty('/lifts/lift_speed_down', .3, persistent=True)
 
@@ -116,7 +116,7 @@ class MyRobot(wpilib.TimedRobot):
 
     lift_target = ntproperty("/lifts/lift_target", 0)
 
-    front_lift_heights = [0, 6800, 6800, 9700, 15792, 18529, 21500, 29500, 31500]#ntproperty("/lifts/front_lift_heights", [1,2,3,4,5,6], persistent=True)
+    front_lift_heights = [0,3000, 6800, 6800, 9700, 15792, 18529, 21500, 29500, 31500]#ntproperty("/lifts/front_lift_heights", [1,2,3,4,5,6], persistent=True)
     front_lift_heights_index = ntproperty("/lifts/front_lift_heights_index", 0, persistent=True)
 
     climb_toggle = ntproperty('/lifts/climb_toggle', False, persistent=True)
@@ -218,6 +218,17 @@ class MyRobot(wpilib.TimedRobot):
         self.pid_turn_rate = 0
 
 
+        self.prev_button1 = False
+
+        self.button = False
+
+        self.button_chomp = False
+
+        self.front_lift_heights_index = 0
+
+        self.lift_target = 0
+
+
         self.driveStates = {
             'velocity': Velocty_Mode(self),
             'enter_position': Enter_Position_Mode(self),
@@ -310,15 +321,6 @@ class MyRobot(wpilib.TimedRobot):
                                   self.velocity_f)
 
     def autonomousInit(self):
-        """This function is run once each time the robot enters autonomous mode."""
-        #self.robot_drive.mecanumDrive_Cartesian(1, 1, 0, 0)
-        pass
-
-    def autonomousPeriodic(self):
-        pass
-
-
-    def teleopInit(self):
         self.desired_angle = 0
         self.navx.reset()
         self.angle_pid.disable()
@@ -326,22 +328,15 @@ class MyRobot(wpilib.TimedRobot):
         self.arm_pid.enable()
         self.arm_pid.setSetpoint(self.open_state)
 
-        self.prev_button1 = False
-
-        self.button = False
-
-        self.button_chomp = False
-
-        self.front_lift_heights_index = 0
-
-        self.lift_target = 0
-
         self.front_lift.setQuadraturePosition(0, 0)
         self.fr_motor.setQuadraturePosition(0, 0)
         self.fl_motor.setQuadraturePosition(0, 0)
         self.br_motor.setQuadraturePosition(0, 0)
         self.bl_motor.setQuadraturePosition(0, 0)
         #self.bl_motor.configOpenLoopRamp
+
+    def teleopInit(self):
+        pass
 
 
     def on_pid_toggle(self):
@@ -361,10 +356,17 @@ class MyRobot(wpilib.TimedRobot):
                               -self.deadzone(self.joystick.getRawAxis(self.LY_AXIS)),
                               self.deadzone(self.joystick.getRawAxis(self.RX_AXIS)),
                               self.deadzone(self.relativeGyro.getAngle()))
-
+                              
 
     def teleopPeriodic(self):
+        self.robotPeriodic()
+        
+    def autonomousPeriodic(self):
+        self.robotPeriodic()
+
+    def robotPeriodic(self):
         self.drive_sm.run()
+        #print('state: ', self.drive_sm.get_state())
         #self.lift_sm.run()
         #print("elevator pid: ", self.get_lift_position(), "lift state: ", self.lift_sm.get_state(), "   target position: ",self.front_lift_heights[self.front_lift_heights_index])
         # print(f"FL: {self.fl_motor.getQuadraturePosition()}    FR: {self.fr_motor.getQuadraturePosition()}    BL: {self.bl_motor.getQuadraturePosition()}    BR: {self.br_motor.getQuadraturePosition()}")
@@ -373,66 +375,9 @@ class MyRobot(wpilib.TimedRobot):
         
         self.match_time = self.timer.getMatchTime()
 
-        lift_speed = 45
-
-        #chomp_button
-        if self.joystick.getRawButton(4) and self.button == False:
-            self.front_lift_heights_index = 0
-            self.button_chomp = True
-         elif self.joystick.getRawButton(4):
-            pass
-        else:
-            self.button = False
-
-
-        # if the right bumper is pressed
-        if self.joystick.getRawButton(6) and self.button == False:
-            self.button = True
-            self.front_lift_increment()
-            self.setMotorPids(self.front_lift, 1, 0, 0, 0)
-            self.lift_target = self.front_lift_heights[int(self.front_lift_heights_index)]
-            # if the left bumper is pressed
-        elif self.joystick.getRawButton(5) and self.button == False:
-            self.front_lift_decrement()
-            self.button = True
-            self.setMotorPids(self.front_lift, .2, 0, 0, 0)
-            self.lift_target = self.front_lift_heights[int(self.front_lift_heights_index)]
-        # If neither bumper is pressed
-        elif ((self.joystick.getRawButton(6)) or (self.joystick.getRawButton(5))) and self.button == True:
-            pass
-        else:
-            self.button = False
-
-        if self.deadzone(self.joystick.getRawAxis(self.R_TRIGGER)) > 0:
-            if self.lift_target < 31500:
-                self.lift_target += (lift_speed * self.joystick.getRawAxis(self.R_TRIGGER))
-        elif self.deadzone(self.joystick.getRawAxis(self.L_TRIGGER)) > 0:
-            if self.lift_target > -1000:
-                self.lift_target -= (lift_speed * self.joystick.getRawAxis(self.L_TRIGGER))
-
-        print('lift target:  ',self.lift_target,'      lift encoder:', self.front_lift.getQuadraturePosition())
-
-        self.front_lift.set(ctre.WPI_TalonSRX.ControlMode.Position, self.lift_target)
-            
-
-
-         # button 1 toggles pid_position
-        button1 = self.joystick.getRawButton(1)
-        #print(self.arm)
-        if button1 and not self.prev_button1:
-            if (self.arm_pid.getSetpoint() == self.open_state):
-                self.arm_pid.setSetpoint(self.closed_state)
-            else:
-                self.arm_pid.setSetpoint(self.open_state)
         
-        if self.joystick.getPOV(0) == 0:
-            self.back_lift_wheel.set(-1)
-        elif self.joystick.getPOV(0) == 180 :
-            self.back_lift_wheel.set(1)
-        else:
-            self.back_lift_wheel.set(0)
 
-        self.prev_button1 = button1
+ 
         
 
         #print(f"FL: {self.fl_motor.getQuadraturePosition()}    FR: {self.fr_motor.getQuadraturePosition()}    BL: {self.bl_motor.getQuadraturePosition()}    BR: {self.br_motor.getQuadraturePosition()}")
