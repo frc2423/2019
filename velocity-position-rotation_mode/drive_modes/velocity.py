@@ -34,7 +34,10 @@ class Velocty_Mode:
         x_speed = self.robot.deadzone(self.robot.joystick.getRawAxis(self.robot.LX_AXIS))
         y_speed = self.robot.deadzone(self.robot.joystick.getRawAxis(self.robot.LY_AXIS))
         z_speed = self.robot.deadzone(self.robot.joystick.getRawAxis(4))
-        fl, bl, fr, br = driveCartesian(-x_speed, y_speed, -z_speed)
+        
+        angle = 0 if not self.robot.field_centric else self.robot.navx.getAngle()
+        
+        fl, bl, fr, br = driveCartesian(-x_speed, y_speed, -z_speed, angle)
 
         if self.robot.velocity_mode:
             fl = self.robot.to_motor_speed(fl * self.robot.max_speed, self.robot.ticks_per_rev_fl)

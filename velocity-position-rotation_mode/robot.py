@@ -89,6 +89,8 @@ class MyRobot(wpilib.TimedRobot):
     max_speed = ntproperty('/encoders/max_speed', 10, persistent = True)
     wheel_diameter = ntproperty('/encoders/wheel_diameter', 6, persistent = True)
 
+    field_centric = ntproperty('/encoders/field_centric', False, persistent = True)
+
     ticks_per_rev_fl = 12000 #ntproperty('/encoders/ticks_per_rev_fl', 8630, persistent = True) # done
     ticks_per_rev_bl = 12000 #ntproperty('/encoders/ticks_per_rev_bl', 8630, persistent = True) # done
     ticks_per_rev_fr = 12000 #ntproperty('/encoders/ticks_per_rev_fr', 8630, persistent = True) # done
