@@ -61,8 +61,13 @@ class MyRobot(wpilib.TimedRobot):
     front_lift_speed_down = ntproperty('/lifts/front_lift_speed_down', .3, persistent=True)
     arm_speed_up = .5#ntproperty('/lifts/arm_speed_up', 1, persistent=True)
     arm_speed_down = .1#ntproperty('/lifts/arm_speed_down', .3, persistent=True)/2
-    front_raised_max = ntproperty('/lifts/front_raised_max', 1000, persistent=True)
-    front_bottom = ntproperty('/lifts/front_bottom', 0, persistent=True)
+
+    front_raised_max = ntproperty('/lifts/max', 31500, persistent=True)
+    front_bottom = ntproperty('/lifts/min', -1000, persistent=True)
+    lift_adjust_value = ntproperty('/lifts/adjust_value', 1000, persistent =True)
+    ntproperty('/lifts/.type', 'Adjustable')
+
+
     lift_divider = ntproperty('/lifts/lift_divider', 3, persistent=True)
     lift_speed_up = ntproperty('/lifts/lift_speed_up', 1, persistent=True)
     lift_speed_down = ntproperty('/lifts/lift_speed_down', .3, persistent=True)
@@ -208,8 +213,13 @@ class MyRobot(wpilib.TimedRobot):
 
         self.timer = wpilib.Timer()
 
-        self.open_state = .02
-        self.closed_state = .35
+
+        self.arm_adjust_value = ntproperty('/arms/adjust_value', .5, persistent = True)
+        self.open_state = ntproperty('/arms/max', .02, persistent = True)
+        self.closed_state = ntproperty('/arms/min', .35, persistent = True)
+        ntproperty('/arms/.type', 'Adjustable')
+
+        
 
         self.arm_pot = wpilib.AnalogPotentiometer(0)
         self.arm_pid = wpilib.PIDController(3,0,0, self.arm_pot.get, self.pid_output)
