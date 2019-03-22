@@ -67,6 +67,10 @@ class MyRobot(wpilib.TimedRobot):
     lift_adjust_value = ntproperty('/lifts/adjust_value', 1000, persistent =True)
     ntproperty('/lifts/.type', 'Adjustable')
 
+    self.arm_adjust_value = ntproperty('/arms/adjust_value', .5, persistent = True)
+    self.open_state = ntproperty('/arms/max', .02, persistent = True)
+    self.closed_state = ntproperty('/arms/min', .35, persistent = True)
+    ntproperty('/arms/.type', 'Adjustable')
 
     lift_divider = ntproperty('/lifts/lift_divider', 3, persistent=True)
     lift_speed_up = ntproperty('/lifts/lift_speed_up', 1, persistent=True)
@@ -212,12 +216,6 @@ class MyRobot(wpilib.TimedRobot):
         self.relativeGyro = RelativeGyro(self.navx)
 
         self.timer = wpilib.Timer()
-
-
-        self.arm_adjust_value = ntproperty('/arms/adjust_value', .5, persistent = True)
-        self.open_state = ntproperty('/arms/max', .02, persistent = True)
-        self.closed_state = ntproperty('/arms/min', .35, persistent = True)
-        ntproperty('/arms/.type', 'Adjustable')
 
         
 
