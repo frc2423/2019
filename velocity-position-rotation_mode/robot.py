@@ -67,6 +67,10 @@ class MyRobot(wpilib.TimedRobot):
     lift_adjust_value = ntproperty('/lifts/adjust_value', 1000, persistent =True)
     ntproperty('/lifts/.type', 'Adjustable')
 
+    arm_adjust_value = ntproperty('/arms/adjust_value', .5, persistent = True)
+    open_state = ntproperty('/arms/max', .02, persistent = True)
+    closed_state = ntproperty('/arms/min', .35, persistent = True)
+    ntproperty('/arms/.type', 'Adjustable')
 
     lift_divider = ntproperty('/lifts/lift_divider', 3, persistent=True)
     lift_speed_up = ntproperty('/lifts/lift_speed_up', 1, persistent=True)
@@ -213,14 +217,6 @@ class MyRobot(wpilib.TimedRobot):
 
         self.timer = wpilib.Timer()
 
-
-        self.arm_adjust_value = ntproperty('/arms/adjust_value', .5, persistent = True)
-        self.open_state = ntproperty('/arms/max', .02, persistent = True)
-        self.closed_state = ntproperty('/arms/min', .35, persistent = True)
-        ntproperty('/arms/.type', 'Adjustable')
-
-        
-
         self.arm_pot = wpilib.AnalogPotentiometer(0)
         self.arm_pid = wpilib.PIDController(3,0,0, self.arm_pot.get, self.pid_output)
 
@@ -338,7 +334,7 @@ class MyRobot(wpilib.TimedRobot):
         self.angle_pid.disable()
         
         self.arm_pid.enable()
-        self.arm_pid.setSetpoint(self.open_state)
+        self.arm_pid.setSetpoint(float(self.open_state))
 
         self.front_lift.setQuadraturePosition(0, 0)
         self.fr_motor.setQuadraturePosition(0, 0)
