@@ -329,6 +329,12 @@ class MyRobot(wpilib.TimedRobot):
                                   self.velocity_f)
 
     def autonomousInit(self):
+        self.periodInit()
+
+    def teleopInit(self):
+        self.periodInit()
+
+    def periodInit(self):
         self.desired_angle = 0
         self.navx.reset()
         self.angle_pid.disable()
@@ -341,10 +347,6 @@ class MyRobot(wpilib.TimedRobot):
         self.fl_motor.setQuadraturePosition(0, 0)
         self.br_motor.setQuadraturePosition(0, 0)
         self.bl_motor.setQuadraturePosition(0, 0)
-        #self.bl_motor.configOpenLoopRamp
-
-    def teleopInit(self):
-        pass
 
 
     def on_pid_toggle(self):
