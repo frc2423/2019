@@ -130,11 +130,14 @@ class Velocty_Mode:
         self.robot.back_lift.set(0)
 
 
-        if self.robot.joystick.getRawButton(self.robot.BUTTON_LBUMPER):
-            return 'enter_rotation'
-        elif self.robot.joystick.getRawButton(self.robot.BUTTON_RBUMPER):
-            return 'enter_position'
-        elif self.robot.climb_toggle:
+        # if self.robot.joystick.getRawButton(self.robot.BUTTON_LBUMPER):
+        #     return 'enter_rotation'
+        # elif self.robot.joystick.getRawButton(self.robot.BUTTON_RBUMPER):
+        #     return 'enter_position'
+        # elif self.robot.climb_toggle:
+        #     return 'lift_robot'
+
+        if self.robot.climb_toggle:
             return 'lift_robot'
 
         return 'velocity'

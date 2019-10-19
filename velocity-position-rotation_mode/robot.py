@@ -67,7 +67,7 @@ class MyRobot(wpilib.TimedRobot):
     lift_adjust_value = ntproperty('/lifts/adjust_value', 1000, persistent =True)
     ntproperty('/lifts/.type', 'Adjustable')
 
-    arm_adjust_value = ntproperty('/arms/adjust_value', .5, persistent = True)
+    arm_adjust_value = ntproperty('/arms/adjust_value', .1, persistent = True)
     open_state = ntproperty('/arms/max', .02, persistent = True)
     closed_state = ntproperty('/arms/min', .35, persistent = True)
     ntproperty('/arms/.type', 'Adjustable')
@@ -127,7 +127,7 @@ class MyRobot(wpilib.TimedRobot):
 
     lift_target = ntproperty("/lifts/lift_target", 0)
 
-    front_lift_heights = [0,3000, 6800, 6800, 9700, 15792, 18529, 21500, 29500, 31500]#ntproperty("/lifts/front_lift_heights", [1,2,3,4,5,6], persistent=True)
+    front_lift_heights = [0,3000, 6800, 6800, 10700, 15792, 18529, 21500, 29500, 31500]#ntproperty("/lifts/front_lift_heights", [1,2,3,4,5,6], persistent=True)
     front_lift_heights_index = ntproperty("/lifts/front_lift_heights_index", 0, persistent=True)
 
     climb_toggle = ntproperty('/lifts/climb_toggle', False, persistent=True)
@@ -190,6 +190,8 @@ class MyRobot(wpilib.TimedRobot):
         self.br_motor.configSelectedFeedbackSensor(ctre.FeedbackDevice.QuadEncoder, 0, MyRobot.TIMEOUT_MS)
 
         self.front_lift.configSelectedFeedbackSensor(ctre.FeedbackDevice.QuadEncoder, 0, MyRobot.TIMEOUT_MS)
+
+        self.back_lift.configSelectedFeedbackSensor(ctre.FeedbackDevice.CTRE_MagEncoder_Relative, 0, MyRobot.TIMEOUT_MS)
 
         # Reverse negative encoder values
         self.fl_motor.setSensorPhase(True)
@@ -347,6 +349,7 @@ class MyRobot(wpilib.TimedRobot):
         self.fl_motor.setQuadraturePosition(0, 0)
         self.br_motor.setQuadraturePosition(0, 0)
         self.bl_motor.setQuadraturePosition(0, 0)
+        self.back_lift.setSelectedSensorPosition(0, 0, 0)
 
 
     def on_pid_toggle(self):
