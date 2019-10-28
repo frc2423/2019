@@ -362,6 +362,9 @@ class Robot : TimedRobot() {
   }
 
   fun periodInit() {
+
+    println("PERIOD INIT")
+
     navx.reset()
     anglePid.disable()
   
@@ -386,7 +389,7 @@ class Robot : TimedRobot() {
     if (-min < value && value < min) {
         return 0.0
     } else {
-        val scaledValue = (abs(value) - min) / (1 - min)
+        val scaledValue = (abs(value) - min) / (1.0 - min)
         return scaledValue.withSign(value)
     }
   }
