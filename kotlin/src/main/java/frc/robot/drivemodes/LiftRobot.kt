@@ -1,7 +1,6 @@
 package frc.robot.drivemodes.liftrobot
 
-import frc.robot.State
-import frc.robot.Robot
+import frc.robot.*
 
 class Lift_Robot(robot : Robot) : State {
 
@@ -73,7 +72,7 @@ class Lift_Robot(robot : Robot) : State {
         m_robot.frontLiftHeightsIndex = 0
         return "lift_robot"
     }
-    m_robot.frontLift.setSelectedSensorPosition(0, 0, m_robot.TIMEOUT_MS)
+    m_robot.frontLift.setSelectedSensorPosition(0, 0, TIMEOUT_MS)
     return "velocity"
   }
 }

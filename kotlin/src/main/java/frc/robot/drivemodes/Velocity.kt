@@ -5,6 +5,7 @@ import frc.robot.Robot
 import frc.robot.mecanum.driveCartesian
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX
 import com.ctre.phoenix.motorcontrol.ControlMode
+import frc.robot.*
 
 class Velocity_Mode(robot : Robot) : State {
 
@@ -28,8 +29,8 @@ class Velocity_Mode(robot : Robot) : State {
   }
 
   private fun setDriveMotors() {
-    val xSpeed = m_robot.deadzone(m_robot.joystick.getRawAxis(m_robot.LX_AXIS))
-    val ySpeed = m_robot.deadzone(m_robot.joystick.getRawAxis(m_robot.LY_AXIS))
+    val xSpeed = m_robot.deadzone(m_robot.joystick.getRawAxis(LX_AXIS))
+    val ySpeed = m_robot.deadzone(m_robot.joystick.getRawAxis(LY_AXIS))
     val zSpeed = m_robot.deadzone(m_robot.joystick.getRawAxis(4))
     
     val angle = if (!m_robot.fieldCentric) 0.0 else m_robot.navx.getAngle()
@@ -69,12 +70,12 @@ class Velocity_Mode(robot : Robot) : State {
   private fun makeElevatorFineAdjustments() {
     val liftSpeed = 45.0
 
-    if (m_robot.deadzone(m_robot.joystick.getRawAxis(m_robot.R_TRIGGER)) > 0) {
+    if (m_robot.deadzone(m_robot.joystick.getRawAxis(R_TRIGGER)) > 0) {
       if (m_robot.liftTarget < 31500.0)
-        m_robot.liftTarget += (liftSpeed * m_robot.joystick.getRawAxis(m_robot.R_TRIGGER))
-    } else if (m_robot.deadzone(m_robot.joystick.getRawAxis(m_robot.L_TRIGGER)) > 0)
+        m_robot.liftTarget += (liftSpeed * m_robot.joystick.getRawAxis(R_TRIGGER))
+    } else if (m_robot.deadzone(m_robot.joystick.getRawAxis(L_TRIGGER)) > 0)
       if (m_robot.liftTarget > -1000.0)
-        m_robot.liftTarget -= (liftSpeed * m_robot.joystick.getRawAxis(m_robot.L_TRIGGER))
+        m_robot.liftTarget -= (liftSpeed * m_robot.joystick.getRawAxis(L_TRIGGER))
   }
 
   private fun setArmPosition() {

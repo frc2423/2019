@@ -6,10 +6,7 @@ import com.kauailabs.navx.frc.AHRS
 import edu.wpi.first.wpilibj.SPI
 import edu.wpi.first.wpilibj.Timer
 import edu.wpi.first.wpilibj.PIDController
-import edu.wpi.first.wpilibj.PIDSource
-import edu.wpi.first.wpilibj.PIDSourceType
 import edu.wpi.first.wpilibj.AnalogPotentiometer
-import edu.wpi.first.networktables.NetworkTable
 import edu.wpi.first.wpilibj.TimedRobot
 import edu.wpi.first.wpilibj.Joystick
 import kotlin.math.PI
@@ -18,92 +15,21 @@ import kotlin.math.withSign
 import edu.wpi.first.networktables.NetworkTableInstance
 import edu.wpi.first.networktables.EntryNotification
 import edu.wpi.first.networktables.EntryListenerFlags
-
-import frc.robot.NtProperty
-import frc.robot.State
-import frc.robot.StateMachine
-
 import frc.robot.drivemodes.velocity.Velocity_Mode
 import frc.robot.drivemodes.liftrobot.Lift_Robot
-
 import edu.wpi.first.wpilibj.CameraServer
-
-class RelativeGyro(navx : AHRS) : PIDSource {
-
-    private val m_navx : AHRS
-    private var m_zeroAngle : Double
-    private var pidSourceType : PIDSourceType
-
-    init {
-      m_navx = navx
-      m_zeroAngle = navx.getAngle()
-      pidSourceType = PIDSourceType.kDisplacement
-    }
-
-    public fun reset() {
-      m_zeroAngle = m_navx.getAngle()
-    }
-
-    public fun getAngle() : Double {
- 
-      val adjustedAngle = m_navx.getAngle() - m_zeroAngle
-
-      if (adjustedAngle >= -180.0 && adjustedAngle <= 200.0) {
-        return adjustedAngle
-      } else if (adjustedAngle < -180.0) {
-        return 360.0 + adjustedAngle
-      } else {
-        return adjustedAngle - 360.0
-      }
-    }
-
-    override public fun getPIDSourceType(): PIDSourceType {
-        return pidSourceType
-    }
-
-    override public fun setPIDSourceType(type: PIDSourceType) {
-        pidSourceType = type
-    }
-
-    override public fun pidGet(): Double {
-        return this.getAngle()
-    }
-}
 
 class Robot : TimedRobot() {
   
-  val TIMEOUT_MS = 30
   val ntInstance : NetworkTableInstance = NetworkTableInstance.getDefault();
-
-  
-  //private val velocity_p by NtProperty("/encoders/velocity_p", .1, persistent = true)
 
   var velocityP = .1
   var velocityI = .0001
   var velocityD = 0.0
   var velocityF = .1
 
-  var positionP by NtProperty("/encoders/position_p", .5, persistent = true)
-  var positionI by NtProperty("/encoders/position_i", 0.0, persistent = true)
-  var positionD by NtProperty("/encoders/position_d", 0.0, persistent = true)
-  var positionF by NtProperty("/encoders/position_f", .7, persistent = true)
-
-  var elevatorP by NtProperty("/encoders/elevator_p", 0.0, persistent = true)
-  var elevatorI by NtProperty("/encoders/elevator_i", 0.0, persistent = true)
-  var elevatorD by NtProperty("/encoders/elevator_d", 0.0, persistent = true)
-  var elevatorF by NtProperty("/encoders/elevator_f", 0.0, persistent = true)
-
   var backLiftSpeedUp by NtProperty("/lifts/back_lift_speed_up", .5, persistent = true)
   var backLiftSpeedDown by NtProperty("/lifts/back_lift_speed_down", .7, persistent = true)
-  var frontLiftSpeedUp by NtProperty("/lifts/front_lift_speed_up", 1, persistent = true)
-  var frontLiftSpeedDown by NtProperty("/lifts/front_lift_speed_down", .3, persistent = true)
-  var armSpeedUp = .5 // ntproperty('/lifts/arm_speed_up', 1, persistent=True)
-  var armSpeedDown = .1 // ntproperty('/lifts/arm_speed_down', .3, persistent=True)/2
-
-  var frontRaisedMax by NtProperty("/lifts/max", 31500.0, persistent = true)
-  var frontBottom by NtProperty("/lifts/min", -1000.0, persistent = true)
-  var liftAdjustValue by NtProperty("/lifts/adjust_value", 1000.0, persistent = true)
-  val liftsNtType by NtProperty("/lifts/.type", "Adjustable")
 
   var armAdjustValue by NtProperty("/arms/adjust_value", .1, persistent = true)
   var openState by NtProperty("/arms/max", .02, persistent = true)
@@ -114,26 +40,10 @@ class Robot : TimedRobot() {
   var liftSpeedUp by NtProperty("/lifts/lift_speed_up", 1, persistent = true)
   var liftSpeedDown by NtProperty("/lifts/lift_speed_down", .3, persistent = true)
 
-  var talonRamp by NtProperty("/encoders/talon_ramp", 0.0, persistent = true)
-  var continuousCurrentLimit by NtProperty("/encoder/continuous_current_limit", 0.0, persistent = true)
-  var peakCurrentLimit by NtProperty("/encoder/peak_current_limit", 0.0, persistent = true)
-
-  var liftLimits by NtProperty("/encoders/lift_limits", false, persistent = true)
-
-  var displacementMultiplier by NtProperty("/encoders/displacement_multiplier", 1.0, persistent = true)
-
   var velocityMode by NtProperty("/encoders/velocity_mode", true)
 
-  var servoPosition by NtProperty("/Servo/Value", .5, persistent = true)
-  var servoOffset1 by NtProperty("/Servo/Offset1", 0.0, persistent = true)
-  var servoOffset2 by NtProperty("/Servo/Offset2", 0.0, persistent = true)
-  var armUp by NtProperty("/Servo/ArmUp", 0.0, persistent = true)
-  var armDown by NtProperty("/Servo/ArmDown", 0.0, persistent = true)
-
-  var ticksPerRev by NtProperty("/encoders/ticks_per_rev", 1440.0, persistent = true)
   var wheelDiameter by NtProperty("/encoders/wheel_diameter", 6.0, persistent = true)
   var maxSpeed by NtProperty("/encoders/max_speed", 10.0, persistent = true)
-  // liftorball = ntproperty('/Servo/ArmforBall', 0.5, persistent = True)
 
   var fieldCentric by NtProperty("/encoders/field_centric", false, persistent = true)
 
@@ -141,24 +51,6 @@ class Robot : TimedRobot() {
   var ticksPerRevBL = 12000.0 // ntproperty('/encoders/ticks_per_rev_bl', 8630, persistent = True) # done
   var ticksPerRevFR = 12000.0 // ntproperty('/encoders/ticks_per_rev_fr', 8630, persistent = True) # done
   var ticksPerRevBR = 12000.0 //ntproperty('/encoders/ticks_per_rev_br', 8630, persistent = True) # done
-
-  fun setMotorPids(motor : WPI_TalonSRX, p : Double, i : Double, d : Double, f : Double) {
-    motor.config_kP(0, p, TIMEOUT_MS)
-    motor.config_kI(0, i, TIMEOUT_MS)
-    motor.config_kF(0, f, TIMEOUT_MS)
-    motor.config_kD(0, d, TIMEOUT_MS)
-  }
-
-  var turnRateP by NtProperty("/gyro/turn_rate_p", 0.0, persistent = true)
-  var turnRateI by NtProperty("/gyro/turn_rate_i", 0.0, persistent = true)
-  var turnRateD by NtProperty("/gyro/turn_rate_d", 0.0, persistent = true)
-
-  var turnRatePidInputRange by NtProperty("/gyro/pid_input_range", 180.0, persistent = true)
-  var turnRatePidOutputRange by NtProperty("/gyro/pid_output_range", 1.0, persistent = true)
-
-  var pauseTime by NtProperty("/gyro/pause_time", 1.0, persistent = true)
-
-  var maxTurnRate by NtProperty("/gyro/max_turn_rate", 120, persistent = true)
 
   var liftTarget by NtProperty("/lifts/lift_target", 0.0)
 
@@ -168,28 +60,6 @@ class Robot : TimedRobot() {
   var climbToggle by NtProperty("/lifts/climb_toggle", false, persistent = true)
 
   var matchTime by NtProperty("/time/match-time", 0.0)
-
-  val BUTTON_RBUMPER = 6
-  val BUTTON_LBUMPER = 5
-
-  val BUTTON_A = 1
-  val BUTTON_B = 2
-  val BUTTON_X = 3
-  val BUTTON_Y = 4
-
-  val LY_AXIS = 1
-  val LX_AXIS = 0
-  val RX_AXIS = 4
-  val RY_AXIS = 5
-
-  val R_TRIGGER = 3
-  val L_TRIGGER = 2
-
-  val LEFT_JOYSTICK_BUTTON = 9
-  val RIGHT_JOYSTICK_BUTTON = 10
-
-  val BACK_BUTTON = 7
-  val START_BUTTON = 8
 
   val revPerFt = 12 / (PI * wheelDiameter)
 
@@ -203,56 +73,18 @@ class Robot : TimedRobot() {
   val frontLiftSlave : WPI_TalonSRX
   val backLift : WPI_TalonSRX
   val backLiftWheel : WPI_TalonSRX
-
-  var deadzoneAmount = 0.15
-
-  var controlState = "speed"
-  var startNavx = 0.0
-  var previousHyp = 0.0
-  var jsStartAngle = 0.0
-  var rotStartNavx = 0.0
+  val wheelMotors : Array<WPI_TalonSRX>
 
   val joystick : Joystick
-
-  var usePid = false
-  var revPidToggleBtnValue = false
-
   val navx : AHRS
   val relativeGyro : RelativeGyro
-
-  val timer : Timer
-
   val armPot : AnalogPotentiometer
   val armPid : PIDController
 
-  var initTime = 0.0
-
-  var desiredRate = 0.0
-  var pidTurnRate = 0.0
-
-
   var prevButton1 = false
-
-  var button = false
 
   val driveStates : Map<String, State>
   val driveSm : StateMachine
-
-  val wheelMotors : Array<WPI_TalonSRX>
-
-  val anglePid : PIDController
-
-  fun frontLiftIncrement() {
-    if (frontLiftHeightsIndex < (frontLiftHeights.size - 1)) {
-      frontLiftHeightsIndex += 1
-    }
-  }
-
-  fun frontLiftDecrement() {
-    if (frontLiftHeightsIndex > 0) {
-      frontLiftHeightsIndex -= 1
-    }
-  }
 
   init {
 
@@ -294,8 +126,6 @@ class Robot : TimedRobot() {
     navx = AHRS(SPI.Port.kMXP)
     relativeGyro = RelativeGyro(navx)
 
-    timer = Timer()
-
     armPot = AnalogPotentiometer(0)
     armPid = PIDController(3.0, 0.0, 0.0, armPot, arm)
 
@@ -315,11 +145,6 @@ class Robot : TimedRobot() {
     wheelMotors = arrayOf(brMotor, blMotor, frMotor, flMotor)
 
     CameraServer.getInstance().startAutomaticCapture()
-
-    anglePid = PIDController(turnRateP, turnRateI, turnRateD, relativeGyro, { turnRate -> pidTurnRate = turnRate })
-    anglePid.setInputRange(-turnRatePidInputRange, turnRatePidInputRange)
-    anglePid.setOutputRange(-turnRatePidOutputRange, turnRatePidOutputRange)
-    anglePid.setContinuous(true)
   }
 
   fun entryListener(event : EntryNotification) {
@@ -328,13 +153,6 @@ class Robot : TimedRobot() {
     val key = entry.name
 
     try {
-      if (key == "/gyro/turn_rate_p")
-          anglePid.setP(turnRateP)
-      else if (key == "/gyro/turn_rate_i")
-          anglePid.setI(turnRateI)
-      else if (key == "/gyro/turn_rate_d")
-          anglePid.setD(turnRateD)
-
       if (key == "/lifts/front_lift_heights_index") {
         liftTarget = frontLiftHeights[frontLiftHeightsIndex]
       }
@@ -345,6 +163,13 @@ class Robot : TimedRobot() {
     } catch(e: Exception) {
       println("There was an oopsy")
     }
+  }
+
+  fun setMotorPids(motor : WPI_TalonSRX, p : Double, i : Double, d : Double, f : Double) {
+    motor.config_kP(0, p, TIMEOUT_MS)
+    motor.config_kI(0, i, TIMEOUT_MS)
+    motor.config_kF(0, f, TIMEOUT_MS)
+    motor.config_kD(0, d, TIMEOUT_MS)
   }
 
   fun setWheelPids() {
@@ -366,7 +191,6 @@ class Robot : TimedRobot() {
     println("PERIOD INIT")
 
     navx.reset()
-    anglePid.disable()
   
     armPid.enable()
     armPid.setSetpoint(openState)

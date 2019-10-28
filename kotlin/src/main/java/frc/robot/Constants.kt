@@ -1,0 +1,25 @@
+package frc.robot
+
+val TIMEOUT_MS = 30
+
+val BUTTON_RBUMPER = 6
+val BUTTON_LBUMPER = 5
+
+val BUTTON_A = 1
+val BUTTON_B = 2
+val BUTTON_X = 3
+val BUTTON_Y = 4
+
+val LY_AXIS = 1
+val LX_AXIS = 0
+val RX_AXIS = 4
+val RY_AXIS = 5
+
+val R_TRIGGER = 3
+val L_TRIGGER = 2
+
+val LEFT_JOYSTICK_BUTTON = 9
+val RIGHT_JOYSTICK_BUTTON = 10
+
+val BACK_BUTTON = 7
+val START_BUTTON = 8
