@@ -143,7 +143,6 @@ class Robot : TimedRobot() {
   var ticksPerRevBR = 12000.0 //ntproperty('/encoders/ticks_per_rev_br', 8630, persistent = True) # done
 
   fun setMotorPids(motor : WPI_TalonSRX, p : Double, i : Double, d : Double, f : Double) {
-    println("setting encoder PIDs")
     motor.config_kP(0, p, TIMEOUT_MS)
     motor.config_kI(0, i, TIMEOUT_MS)
     motor.config_kF(0, f, TIMEOUT_MS)
@@ -236,8 +235,6 @@ class Robot : TimedRobot() {
 
   var button = false
 
-  var buttonChomp = false
-
   val driveStates : Map<String, State>
   val driveSm : StateMachine
 
@@ -292,7 +289,7 @@ class Robot : TimedRobot() {
 
     joystick = Joystick(0)
     
-    ntInstance.addEntryListener("/", ::entryListener, EntryListenerFlags.kUpdate or EntryListenerFlags.kNew)
+    ntInstance.addEntryListener("/", ::entryListener, EntryListenerFlags.kUpdate or EntryListenerFlags.kNew or EntryListenerFlags.kImmediate)
   
     navx = AHRS(SPI.Port.kMXP)
     relativeGyro = RelativeGyro(navx)
@@ -326,9 +323,10 @@ class Robot : TimedRobot() {
   }
 
   fun entryListener(event : EntryNotification) {
+    
     val entry = event.getEntry()
     val key = entry.name
-    
+
     try {
       if (key == "/gyro/turn_rate_p")
           anglePid.setP(turnRateP)
@@ -337,8 +335,9 @@ class Robot : TimedRobot() {
       else if (key == "/gyro/turn_rate_d")
           anglePid.setD(turnRateD)
 
-      if (key == "/lifts/front_lift_heights_index")
-          liftTarget = frontLiftHeights[frontLiftHeightsIndex]
+      if (key == "/lifts/front_lift_heights_index") {
+        liftTarget = frontLiftHeights[frontLiftHeightsIndex]
+      }
 
       if ("encoders" in key) {
           setWheelPids()

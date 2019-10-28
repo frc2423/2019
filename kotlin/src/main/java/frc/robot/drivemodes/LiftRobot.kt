@@ -20,8 +20,6 @@ class Lift_Robot(robot : Robot) : State {
     // setting lift power
     var liftPower = -m_robot.navx.getPitch() / (m_robot.liftDivider *1.5)
 
-    println("back lift pos: $backLiftPos")
-
     // back lift wheel control
     if (m_robot.joystick.getPOV(0) == 0)
         m_robot.backLiftWheel.set(-1.0)
@@ -44,8 +42,6 @@ class Lift_Robot(robot : Robot) : State {
       else
           liftPower = liftPower * -m_robot.liftSpeedDown
           
-
-      println("lift power: $liftPower")       
       m_robot.frontLift.set(liftPower)
     }
 
@@ -63,8 +59,6 @@ class Lift_Robot(robot : Robot) : State {
       else
           liftPower = liftPower * -m_robot.liftSpeedDown
       
-
-      println("lift power: $liftPower")           
       m_robot.frontLift.set(liftPower)
     }
     else {

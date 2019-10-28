@@ -12,6 +12,22 @@ class Velocity_Mode(robot : Robot) : State {
 
   override public fun run() : String {
     
+    setDriveMotors()
+    chomp()
+    makeElevatorFineAdjustments()
+    
+    m_robot.frontLift.set(ControlMode.Position, m_robot.liftTarget)
+
+    setArmPosition()
+    setBackLift()
+
+    if (m_robot.climbToggle)
+      return "lift_robot"
+
+    return "velocity"
+  }
+
+  private fun setDriveMotors() {
     val xSpeed = m_robot.deadzone(m_robot.joystick.getRawAxis(m_robot.LX_AXIS))
     val ySpeed = m_robot.deadzone(m_robot.joystick.getRawAxis(m_robot.LY_AXIS))
     val zSpeed = m_robot.deadzone(m_robot.joystick.getRawAxis(4))
@@ -41,42 +57,17 @@ class Velocity_Mode(robot : Robot) : State {
       m_robot.frMotor.set(fr)
       m_robot.brMotor.set(br)
     }
+  }
 
+  private fun chomp() {
+    if (m_robot.joystick.getRawButton(4)) {
+      m_robot.frontLiftHeightsIndex = 0
+      m_robot.liftTarget = m_robot.frontLiftHeights[m_robot.frontLiftHeightsIndex]    
+    }
+  }
+
+  private fun makeElevatorFineAdjustments() {
     val liftSpeed = 45.0
-
-    // chomp_button
-    if (m_robot.joystick.getRawButton(4) && m_robot.button == false) {
-        m_robot.frontLiftHeightsIndex = 0
-        m_robot.buttonChomp = true
-    }
-    else if (m_robot.joystick.getRawButton(4)) {
-        
-    }
-    else {
-        m_robot.button = false
-    }
-
-    // if the right bumper is pressed
-    if (m_robot.joystick.getRawButton(6) && m_robot.button == false) {
-        m_robot.button = true
-        m_robot.frontLiftIncrement()
-        m_robot.setMotorPids(m_robot.frontLift, 1.0, 0.0, 0.0, 0.0)
-        m_robot.liftTarget = m_robot.frontLiftHeights[m_robot.frontLiftHeightsIndex]    
-    }
-    // if the left bumper is pressed
-    else if (m_robot.joystick.getRawButton(5) && m_robot.button == false) {
-        m_robot.frontLiftDecrement()
-        m_robot.button = true
-        m_robot.setMotorPids(m_robot.frontLift, .2, 0.0, 0.0, 0.0)
-        m_robot.liftTarget = m_robot.frontLiftHeights[m_robot.frontLiftHeightsIndex]
-    }
-    // If neither bumper is pressed
-    else if (((m_robot.joystick.getRawButton(6)) || (m_robot.joystick.getRawButton(5))) && m_robot.button == true) {
-        
-    }
-    else {
-        m_robot.button = false
-    }
 
     if (m_robot.deadzone(m_robot.joystick.getRawAxis(m_robot.R_TRIGGER)) > 0) {
       if (m_robot.liftTarget < 31500.0)
@@ -84,10 +75,9 @@ class Velocity_Mode(robot : Robot) : State {
     } else if (m_robot.deadzone(m_robot.joystick.getRawAxis(m_robot.L_TRIGGER)) > 0)
       if (m_robot.liftTarget > -1000.0)
         m_robot.liftTarget -= (liftSpeed * m_robot.joystick.getRawAxis(m_robot.L_TRIGGER))
+  }
 
-    m_robot.frontLift.set(ControlMode.Position, m_robot.liftTarget)
-
-    // button 1 toggles pid_position
+  private fun setArmPosition() {
     val button1 = m_robot.joystick.getRawButton(1)
   
     if (button1 && !m_robot.prevButton1)
@@ -97,7 +87,9 @@ class Velocity_Mode(robot : Robot) : State {
             m_robot.armPid.setSetpoint(m_robot.openState)
             
     m_robot.prevButton1 = button1
+  }
 
+  private fun setBackLift() {
     if (m_robot.joystick.getPOV(0) == 0)
       m_robot.backLiftWheel.set(-1.0)
     else if (m_robot.joystick.getPOV(0) == 180)
@@ -106,11 +98,6 @@ class Velocity_Mode(robot : Robot) : State {
       m_robot.backLiftWheel.set(0.0)
 
     m_robot.backLift.set(0.0)
-
-    if (m_robot.climbToggle)
-      return "lift_robot"
-
-    return "velocity"
   }
 }
 
