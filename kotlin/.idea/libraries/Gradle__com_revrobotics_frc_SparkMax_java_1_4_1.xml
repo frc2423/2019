@@ -1,0 +1,11 @@
+<component name="libraryTable">
+  <library name="Gradle: com.revrobotics.frc:SparkMax-java:1.4.1">
+    <CLASSES>
+      <root url="jar://$USER_HOME$/frc2019/maven/com/revrobotics/frc/SparkMax-java/1.4.1/SparkMax-java-1.4.1.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$USER_HOME$/frc2019/maven/com/revrobotics/frc/SparkMax-java/1.4.1/SparkMax-java-1.4.1-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>
