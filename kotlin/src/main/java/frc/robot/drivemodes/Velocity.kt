@@ -17,7 +17,7 @@ class Velocity_Mode(robot : Robot) : State {
     chomp()
     makeElevatorFineAdjustments()
     
-    m_robot.frontLift.set(ControlMode.Position, m_robot.liftTarget)
+    Devices.frontLift.set(ControlMode.Position, m_robot.liftTarget)
 
     setArmPosition()
     setBackLift()
@@ -29,11 +29,11 @@ class Velocity_Mode(robot : Robot) : State {
   }
 
   private fun setDriveMotors() {
-    val xSpeed = m_robot.deadzone(m_robot.joystick.getRawAxis(LX_AXIS))
-    val ySpeed = m_robot.deadzone(m_robot.joystick.getRawAxis(LY_AXIS))
-    val zSpeed = m_robot.deadzone(m_robot.joystick.getRawAxis(4))
+    val xSpeed = m_robot.deadzone(Devices.joystick.getRawAxis(LX_AXIS))
+    val ySpeed = m_robot.deadzone(Devices.joystick.getRawAxis(LY_AXIS))
+    val zSpeed = m_robot.deadzone(Devices.joystick.getRawAxis(4))
     
-    val angle = if (!m_robot.fieldCentric) 0.0 else m_robot.navx.getAngle()
+    val angle = if (!m_robot.fieldCentric) 0.0 else Devices.navx.getAngle()
     
     val driveSpeeds = driveCartesian(-xSpeed, ySpeed, -zSpeed, angle)
     var fl = getDouble(driveSpeeds["fl"])
@@ -47,21 +47,21 @@ class Velocity_Mode(robot : Robot) : State {
       fr = m_robot.toMotorSpeed(fr * m_robot.maxSpeed, m_robot.ticksPerRevFR)
       br = m_robot.toMotorSpeed(br * m_robot.maxSpeed, m_robot.ticksPerRevBR)
 
-      m_robot.flMotor.set(ControlMode.Velocity, fl)
-      m_robot.blMotor.set(ControlMode.Velocity, bl)
-      m_robot.frMotor.set(ControlMode.Velocity, fr)
-      m_robot.brMotor.set(ControlMode.Velocity, br)
+      Devices.flMotor.set(ControlMode.Velocity, fl)
+      Devices.blMotor.set(ControlMode.Velocity, bl)
+      Devices.frMotor.set(ControlMode.Velocity, fr)
+      Devices.brMotor.set(ControlMode.Velocity, br)
     }
     else {
-      m_robot.flMotor.set(fl)
-      m_robot.blMotor.set(bl)
-      m_robot.frMotor.set(fr)
-      m_robot.brMotor.set(br)
+      Devices.flMotor.set(fl)
+      Devices.blMotor.set(bl)
+      Devices.frMotor.set(fr)
+      Devices.brMotor.set(br)
     }
   }
 
   private fun chomp() {
-    if (m_robot.joystick.getRawButton(4)) {
+    if (Devices.joystick.getRawButton(4)) {
       m_robot.frontLiftHeightsIndex = 0
       m_robot.liftTarget = m_robot.frontLiftHeights[m_robot.frontLiftHeightsIndex]    
     }
@@ -70,35 +70,35 @@ class Velocity_Mode(robot : Robot) : State {
   private fun makeElevatorFineAdjustments() {
     val liftSpeed = 45.0
 
-    if (m_robot.deadzone(m_robot.joystick.getRawAxis(R_TRIGGER)) > 0) {
+    if (m_robot.deadzone(Devices.joystick.getRawAxis(R_TRIGGER)) > 0) {
       if (m_robot.liftTarget < 31500.0)
-        m_robot.liftTarget += (liftSpeed * m_robot.joystick.getRawAxis(R_TRIGGER))
-    } else if (m_robot.deadzone(m_robot.joystick.getRawAxis(L_TRIGGER)) > 0)
+        m_robot.liftTarget += (liftSpeed * Devices.joystick.getRawAxis(R_TRIGGER))
+    } else if (m_robot.deadzone(Devices.joystick.getRawAxis(L_TRIGGER)) > 0)
       if (m_robot.liftTarget > -1000.0)
-        m_robot.liftTarget -= (liftSpeed * m_robot.joystick.getRawAxis(L_TRIGGER))
+        m_robot.liftTarget -= (liftSpeed * Devices.joystick.getRawAxis(L_TRIGGER))
   }
 
   private fun setArmPosition() {
-    val button1 = m_robot.joystick.getRawButton(1)
+    val button1 = Devices.joystick.getRawButton(1)
   
     if (button1 && !m_robot.prevButton1)
-        if (m_robot.armPid.getSetpoint() == m_robot.openState)
-            m_robot.armPid.setSetpoint(m_robot.closedState)
+        if (Devices.armPid.getSetpoint() == Devices.openState)
+          Devices.armPid.setSetpoint(Devices.closedState)
         else
-            m_robot.armPid.setSetpoint(m_robot.openState)
+          Devices.armPid.setSetpoint(Devices.openState)
             
     m_robot.prevButton1 = button1
   }
 
   private fun setBackLift() {
-    if (m_robot.joystick.getPOV(0) == 0)
-      m_robot.backLiftWheel.set(-1.0)
-    else if (m_robot.joystick.getPOV(0) == 180)
-      m_robot.backLiftWheel.set(1.0)
+    if (Devices.joystick.getPOV(0) == 0)
+      Devices.backLiftWheel.set(-1.0)
+    else if (Devices.joystick.getPOV(0) == 180)
+      Devices.backLiftWheel.set(1.0)
     else
-      m_robot.backLiftWheel.set(0.0)
+      Devices.backLiftWheel.set(0.0)
 
-    m_robot.backLift.set(0.0)
+    Devices.backLift.set(0.0)
   }
 }
 
