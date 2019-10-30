@@ -14,6 +14,7 @@ class Velocity_Mode(robot : Robot) : State {
   override public fun run() : String {
     
     setDriveMotors()
+    stopTilt()
     chomp()
     makeElevatorFineAdjustments()
     
@@ -100,6 +101,16 @@ class Velocity_Mode(robot : Robot) : State {
 
     Devices.backLift.set(0.0)
   }
+
+  private fun stopTilt() {
+    var tilt = Devices.navx.getAngle()
+    if (tilt > 5) {
+      val driveSpeeds = driveCartesian(-.2, 0.0, 0.0, 0.0)
+    } else if (tilt < -5) {
+      val driveSpeeds = driveCartesian(.2, 0.0, 0.0, 0.0)
+    }
+  }
+
 }
 
 fun getDouble(value : Double?, defaultValue : Double = 0.0) : Double {
