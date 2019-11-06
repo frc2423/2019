@@ -31,6 +31,7 @@ class Robot : TimedRobot() {
   var liftSpeedDown by NtProperty("/lifts/lift_speed_down", .3, persistent = true)
 
   var velocityMode by NtProperty("/encoders/velocity_mode", true)
+  var tilt by NtProperty("/encoders/tilt", false)
 
   var wheelDiameter by NtProperty("/encoders/wheel_diameter", 6.0, persistent = true)
   var maxSpeed by NtProperty("/encoders/max_speed", 10.0, persistent = true)
@@ -69,7 +70,8 @@ class Robot : TimedRobot() {
     
     driveStates = mapOf(
       "velocity" to Velocity_Mode(this),
-      "lift_robot" to Lift_Robot(this)
+      "lift_robot" to Lift_Robot(this),
+      "tilt" to Velocity_Mode(this)
     )
 
     driveSm = StateMachine(driveStates, "Drive_sm")

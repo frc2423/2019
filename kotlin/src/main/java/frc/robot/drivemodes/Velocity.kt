@@ -23,6 +23,9 @@ class Velocity_Mode(robot : Robot) : State {
     setArmPosition()
     setBackLift()
 
+    var tilt = Devices.navx.getAngle()
+    if (tilt > 5 || tilt < -5)
+      return "tilt"
     if (m_robot.climbToggle)
       return "lift_robot"
 
@@ -52,6 +55,33 @@ class Velocity_Mode(robot : Robot) : State {
       Devices.blMotor.set(ControlMode.Velocity, bl)
       Devices.frMotor.set(ControlMode.Velocity, fr)
       Devices.brMotor.set(ControlMode.Velocity, br)
+    }
+    else if (m_robot.tilt) {
+      var tilt = Devices.navx.getAngle()
+      println(tilt)
+      if (tilt < -5) {
+        var driveSpeedsT = driveCartesian(0.4, 0.0, 0.0, 0.0)
+        fl = getDouble(driveSpeedsT["fl"])
+        bl = getDouble(driveSpeedsT["bl"])
+        fr = getDouble(driveSpeedsT["fr"])
+        br = getDouble(driveSpeedsT["br"])
+
+        Devices.flMotor.set(ControlMode.Velocity, fl)
+        Devices.blMotor.set(ControlMode.Velocity, bl)
+        Devices.frMotor.set(ControlMode.Velocity, fr)
+        Devices.brMotor.set(ControlMode.Velocity, br)
+      } else if (tilt > 5) {
+        var driveSpeedsT = driveCartesian(-0.4, 0.0, 0.0, 0.0)
+        fl = getDouble(driveSpeedsT["fl"])
+        bl = getDouble(driveSpeedsT["bl"])
+        fr = getDouble(driveSpeedsT["fr"])
+        br = getDouble(driveSpeedsT["br"])
+
+        Devices.flMotor.set(ControlMode.Velocity, fl)
+        Devices.blMotor.set(ControlMode.Velocity, bl)
+        Devices.frMotor.set(ControlMode.Velocity, fr)
+        Devices.brMotor.set(ControlMode.Velocity, br)
+      }
     }
     else {
       Devices.flMotor.set(fl)
@@ -105,9 +135,16 @@ class Velocity_Mode(robot : Robot) : State {
   private fun stopTilt() {
     var tilt = Devices.navx.getAngle()
     if (tilt > 5) {
-      val driveSpeeds = driveCartesian(-.2, 0.0, 0.0, 0.0)
+      m_robot.tilt = true
+      m_robot.velocityMode = false
+
     } else if (tilt < -5) {
-      val driveSpeeds = driveCartesian(.2, 0.0, 0.0, 0.0)
+      m_robot.tilt = true
+      m_robot.velocityMode = false
+    }
+    else {
+      m_robot.tilt = false
+      m_robot.velocityMode = true
     }
   }
 
